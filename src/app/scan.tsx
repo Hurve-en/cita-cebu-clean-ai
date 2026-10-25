@@ -1,5 +1,6 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { useIsFocused } from "expo-router";
 import { useRef, useState } from "react";
 import { Linking, Platform, StyleSheet, View } from "react-native";
@@ -9,11 +10,17 @@ import { AppButton } from "@/components/ui/app-button";
 import { AppCard } from "@/components/ui/app-card";
 import { AppScreen } from "@/components/ui/app-screen";
 
-type CaptureCameraProps = {
-  onCapture: (uri: string) => void;
+type SelectedPhoto = {
+  uri: string;
+  source: "camera" | "library";
 };
 
-function CaptureCamera({ onCapture }: CaptureCameraProps) {
+type CaptureCameraProps = {
+  onCapture: (uri: string) => void;
+  onChoosePhoto: () => void;
+};
+
+function CaptureCamera({ onCapture, onChoosePhoto }: CaptureCameraProps) {
   const camera = useRef<CameraView>(null);
   const capturing = useRef(false);
 
@@ -69,7 +76,7 @@ function CaptureCamera({ onCapture }: CaptureCameraProps) {
           onMountError={() => {
             setReady(false);
             setError(
-              "The camera could not start. Check permissions and close other apps using it.",
+              "The camera could not start. Check permissions or choose a photo instead.",
             );
           }}
         />
@@ -92,6 +99,13 @@ function CaptureCamera({ onCapture }: CaptureCameraProps) {
         disabled={!ready}
       />
 
+      <AppButton
+        label="Choose a photo"
+        variant="secondary"
+        onPress={onChoosePhoto}
+        disabled={busy}
+      />
+
       {error && (
         <AppButton
           label="Restart camera"
@@ -109,124 +123,215 @@ export default function ScanScreen() {
   const [permission, requestPermission, refreshPermission] =
     useCameraPermissions();
 
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const pickerOpen = useRef(false);
+  const [photo, setPhoto] = useState<SelectedPhoto | null>(null);
+  const [picking, setPicking] = useState(false);
   const [permissionBusy, setPermissionBusy] = useState(false);
-  const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function choosePhoto() {
+    if (pickerOpen.current) {
+      return;
+    }
+
+    pickerOpen.current = true;
+    setPicking(true);
+    setError(null);
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsMultipleSelection: false,
+        allowsEditing: false,
+        quality: 0.8,
+        exif: false,
+        base64: false,
+      });
+
+      // Cancellation preserves any previously selected photo.
+      if (result.canceled) {
+        return;
+      }
+
+      const selected = result.assets[0];
+
+      if (!selected?.uri) {
+        throw new Error("No image returned");
+      }
+
+      setPhoto({
+        uri: selected.uri,
+        source: "library",
+      });
+    } catch {
+      setError(
+        "The photo could not be opened. Try another image or check photo access in your device settings.",
+      );
+    } finally {
+      pickerOpen.current = false;
+      setPicking(false);
+    }
+  }
 
   async function allowCamera() {
     setPermissionBusy(true);
-    setPermissionError(null);
+    setError(null);
 
     try {
       await requestPermission();
     } catch {
-      setPermissionError("Camera permission could not be requested.");
+      setError("Camera permission could not be requested.");
     } finally {
       setPermissionBusy(false);
     }
   }
 
   async function openSettings() {
-    setPermissionError(null);
+    setError(null);
 
     try {
       await Linking.openSettings();
     } catch {
-      setPermissionError("Open your device settings to allow camera access.");
+      setError("Open your device settings to allow camera access.");
     }
   }
 
   async function checkPermission() {
-    setPermissionError(null);
+    setError(null);
 
     try {
       await refreshPermission();
     } catch {
-      setPermissionError("Could not check camera permission. Try again.");
+      setError("Could not check camera permission. Try again.");
     }
+  }
+
+  function useCamera() {
+    setError(null);
+    setPhoto(null);
   }
 
   return (
     <AppScreen
-      title={photoUri ? "Review your photo" : "Waste scanner"}
+      title={photo ? "Review your photo" : "Waste scanner"}
       description={
-        photoUri
+        photo
           ? "Make sure the item is clear and easy to see."
-          : "One item. A little more clarity."
+          : "Take a photo or choose one from your library."
       }
     >
-      {photoUri ? (
+      {picking ? (
+        <AppCard variant="soft">
+          <ThemedText>Choose a photo or cancel to return.</ThemedText>
+        </AppCard>
+      ) : photo ? (
         <>
           <Image
-            source={{ uri: photoUri }}
+            source={{ uri: photo.uri }}
             style={styles.photo}
             contentFit="contain"
-            accessibilityLabel="Your captured waste photo"
+            accessibilityLabel={
+              photo.source === "camera"
+                ? "Your captured waste photo"
+                : "Your selected library photo"
+            }
+            onError={() => {
+              setError(
+                "This image could not be displayed. Please choose another photo.",
+              );
+            }}
           />
 
           <AppCard variant="soft">
-            <ThemedText type="smallBold">Photo captured</ThemedText>
+            <ThemedText type="smallBold">
+              {photo.source === "camera" ? "Photo captured" : "Photo selected"}
+            </ThemedText>
 
             <ThemedText>
-              This preview does not identify waste or award points.
-              Classification will be added after camera capture is tested.
+              Review the item before continuing. AI classification and reward
+              verification are not connected yet.
             </ThemedText>
           </AppCard>
 
-          <AppButton label="Retake photo" onPress={() => setPhotoUri(null)} />
+          <AppButton label="Choose another photo" onPress={choosePhoto} />
+
+          <AppButton
+            label={photo.source === "camera" ? "Retake photo" : "Use camera"}
+            variant="secondary"
+            onPress={useCamera}
+          />
         </>
-      ) : !permission ? (
-        <ThemedText>Checking camera permission…</ThemedText>
-      ) : !permission.granted ? (
+      ) : (
         <>
-          <AppCard variant="soft">
-            <ThemedText type="smallBold">Camera access</ThemedText>
-
-            <ThemedText>
-              Allow access to photograph a waste item. This feature does not
-              request microphone or location access.
-            </ThemedText>
-          </AppCard>
-
-          {permission.canAskAgain ? (
-            <AppButton
-              label="Allow camera"
-              onPress={allowCamera}
-              loading={permissionBusy}
-            />
-          ) : (
+          {!permission ? (
+            <ThemedText>Checking camera permission…</ThemedText>
+          ) : !permission.granted ? (
             <>
-              <ThemedText themeColor="textSecondary">
-                {Platform.OS === "web"
-                  ? "Allow camera access in your browser’s site settings, then check permission again."
-                  : "Allow camera access in your device settings, then return here."}
-              </ThemedText>
+              <AppCard variant="soft">
+                <ThemedText type="smallBold">Camera access</ThemedText>
 
-              {Platform.OS !== "web" && (
-                <AppButton label="Open settings" onPress={openSettings} />
+                <ThemedText>
+                  Allow camera access to take a photo, or select an existing
+                  image below. Gallery selection does not require camera access.
+                </ThemedText>
+              </AppCard>
+
+              {permission.canAskAgain ? (
+                <AppButton
+                  label="Allow camera"
+                  onPress={allowCamera}
+                  loading={permissionBusy}
+                />
+              ) : (
+                <>
+                  <ThemedText themeColor="textSecondary">
+                    {Platform.OS === "web"
+                      ? "Allow camera access in your browser’s site settings, then check permission again."
+                      : "Allow camera access in device settings, then return here."}
+                  </ThemedText>
+
+                  {Platform.OS !== "web" && (
+                    <AppButton label="Open settings" onPress={openSettings} />
+                  )}
+
+                  <AppButton
+                    label="Check permission again"
+                    variant="secondary"
+                    onPress={checkPermission}
+                  />
+                </>
               )}
-
-              <AppButton
-                label="Check permission again"
-                variant="secondary"
-                onPress={checkPermission}
-              />
             </>
+          ) : isFocused ? (
+            <CaptureCamera
+              onCapture={(uri) => {
+                setError(null);
+                setPhoto({ uri, source: "camera" });
+              }}
+              onChoosePhoto={choosePhoto}
+            />
+          ) : null}
+
+          {!permission?.granted && (
+            <AppButton
+              label="Choose a photo"
+              variant="secondary"
+              onPress={choosePhoto}
+              disabled={permissionBusy}
+            />
           )}
         </>
-      ) : isFocused ? (
-        <CaptureCamera onCapture={setPhotoUri} />
-      ) : null}
+      )}
 
-      {permissionError && (
+      {error && (
         <ThemedText accessibilityRole="alert" themeColor="error">
-          {permissionError}
+          {error}
         </ThemedText>
       )}
 
       <ThemedText type="small" themeColor="textSecondary">
-        Photos are not uploaded or saved to your gallery. Captures may remain
-        temporarily in the app’s local cache.
+        Photos are not uploaded. Original gallery images are unchanged. Selected
+        or captured copies may remain in the app’s local cache.
       </ThemedText>
     </AppScreen>
   );
