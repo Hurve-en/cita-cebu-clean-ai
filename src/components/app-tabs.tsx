@@ -1,32 +1,80 @@
-import { NativeTabs } from 'expo-router/native-tabs';
-import { useColorScheme } from 'react-native';
+import { Tabs } from "expo-router";
+import { SymbolView } from "expo-symbols";
 
-import { Colors } from '@/constants/theme';
+import { useTheme } from "@/hooks/use-theme";
 
 export default function AppTabs() {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
+  const theme = useTheme();
 
   return (
-    <NativeTabs
-      backgroundColor={colors.background}
-      indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}>
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/home.png')}
-          renderingMode="template"
-        />
-      </NativeTabs.Trigger>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textSecondary,
+        tabBarHideOnKeyboard: true,
+        tabBarStyle: {
+          backgroundColor: theme.backgroundElement,
+          borderTopColor: theme.border,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "600",
+        },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Home",
+          tabBarAccessibilityLabel: "Home",
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{ ios: "house", android: "home", web: "home" }}
+              tintColor={color}
+              size={24}
+            />
+          ),
+        }}
+      />
 
-      <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Label>Explore</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
-        />
-      </NativeTabs.Trigger>
-    </NativeTabs>
+      <Tabs.Screen
+        name="scan"
+        options={{
+          title: "Scan",
+          tabBarAccessibilityLabel: "Scan waste",
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{
+                ios: "camera",
+                android: "photo_camera",
+                web: "photo_camera",
+              }}
+              tintColor={color}
+              size={24}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="schedules"
+        options={{
+          title: "Schedules",
+          tabBarAccessibilityLabel: "Collection schedules",
+          tabBarIcon: ({ color }) => (
+            <SymbolView
+              name={{
+                ios: "calendar",
+                android: "calendar_month",
+                web: "calendar_month",
+              }}
+              tintColor={color}
+              size={24}
+            />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }
