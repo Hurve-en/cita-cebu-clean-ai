@@ -1,0 +1,72 @@
+{
+  "model_name": "Smart Waste Classification \u2014 MobileNetV2",
+  "source": "https://huggingface.co/karthikeya09/smart_image_recognation",
+  "revision": "bde09f3896e672f6df5342503b59b7177dbee9b0",
+  "source_checkpoint_sha256": "fa8515d3f3c555fbc5f29e7fe03a7a0e0861687739d60a19f74416a1123501f7",
+  "upstream_declared_license": "MIT",
+  "format": "ONNX",
+  "opset": 17,
+  "input": {
+    "name": "image",
+    "shape": [
+      1,
+      3,
+      224,
+      224
+    ],
+    "dtype": "float32",
+    "color": "RGB",
+    "resize": {
+      "width": 224,
+      "height": 224,
+      "interpolation": "bilinear",
+      "antialias": true,
+      "preserve_aspect_ratio": false
+    },
+    "exif_orientation": "apply before resize",
+    "scale": 255,
+    "normalization_mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "normalization_std": [
+      0.229,
+      0.224,
+      0.225
+    ],
+    "formula": "(RGB / 255.0 - mean) / std; then HWC to CHW"
+  },
+  "output": {
+    "name": "logits",
+    "shape": [
+      1,
+      6
+    ],
+    "dtype": "float32",
+    "postprocessing": "softmax over class dimension",
+    "labels": [
+      "glass",
+      "metal",
+      "non-recyclable",
+      "organic",
+      "paper",
+      "plastic"
+    ]
+  },
+  "onnx_sha256": "d0744dc70738b162909631bd36884263bd678282575cb29d746efe1ef3cb47fb",
+  "onnx_size_bytes": 8899000,
+  "versions": {
+    "torch": "2.14.1+cpu",
+    "onnx": "1.23.2",
+    "onnxruntime": "1.31.0"
+  },
+  "limitations": [
+    "Not validated on phones or Expo/RN runtime yet",
+    "No hazardous waste class",
+    "Paper includes cardboard in upstream description",
+    "Scores are not calibrated confidence or proof of disposal",
+    "Four supplied samples are not an accuracy benchmark",
+    "Native integration requires a compatible runtime and development build"
+  ]
+}
