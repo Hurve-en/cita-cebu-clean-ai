@@ -1,98 +1,59 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+const features = [
+  {
+    title: "Scan waste",
+    detail: "Identify waste and learn how to dispose of it.",
+  },
+  {
+    title: "Collection schedules",
+    detail: "Check collection days for your barangay.",
+  },
+  { title: "Report waste", detail: "Report dumping or overflowing bins." },
+];
 
 export default function HomeScreen() {
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <SafeAreaView style={styles.screen} edges={["top", "left", "right"]}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.brand}>CebuCleanAI</Text>
+        <Text style={styles.title}>Cleaner habits. Cleaner Cebu.</Text>
+        <Text style={styles.subtitle}>
+          Your guide to responsible waste disposal.
+        </Text>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+        <View style={styles.notice}>
+          <Text style={styles.noticeText}>
+            Development preview • Services are not connected yet.
+          </Text>
+        </View>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        {features.map(({ title, detail }) => (
+          <View key={title} style={styles.card}>
+            <Text style={styles.cardTitle}>{title}</Text>
+            <Text style={styles.subtitle}>{detail}</Text>
+          </View>
+        ))}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+  screen: { flex: 1, backgroundColor: "#F5F8F5" },
+  content: {
+    padding: 24,
+    gap: 20,
+    maxWidth: 640,
+    width: "100%",
+    alignSelf: "center",
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  brand: { fontSize: 18, fontWeight: "700", color: "#166534" },
+  title: { fontSize: 32, fontWeight: "800", color: "#14281D" },
+  subtitle: { fontSize: 16, lineHeight: 24, color: "#526158" },
+  notice: { padding: 14, borderRadius: 12, backgroundColor: "#E4EEE5" },
+  noticeText: { fontSize: 14, lineHeight: 20, color: "#275536" },
+  card: { padding: 20, gap: 8, borderRadius: 16, backgroundColor: "#FFFFFF" },
+  cardTitle: { fontSize: 19, fontWeight: "700", color: "#14281D" },
 });
