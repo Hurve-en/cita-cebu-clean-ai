@@ -2,13 +2,17 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useIsFocused } from "expo-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Linking, Platform, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { AppButton } from "@/components/ui/app-button";
 import { AppCard } from "@/components/ui/app-card";
 import { AppScreen } from "@/components/ui/app-screen";
+import {
+  classifyPhoto,
+  type WastePrediction,
+} from "@/features/scanner/classify-photo";
 
 type SelectedPhoto = {
   uri: string;
@@ -18,6 +22,15 @@ type SelectedPhoto = {
 type CaptureCameraProps = {
   onCapture: (uri: string) => void;
   onChoosePhoto: () => void;
+};
+
+const MATERIAL_NAMES: Record<string, string> = {
+  glass: "Glass",
+  metal: "Metal",
+  "non-recyclable": "Non-recyclable",
+  organic: "Organic material",
+  paper: "Paper / cardboard",
+  plastic: "Plastic",
 };
 
 function CaptureCamera({ onCapture, onChoosePhoto }: CaptureCameraProps) {
@@ -120,17 +133,39 @@ function CaptureCamera({ onCapture, onChoosePhoto }: CaptureCameraProps) {
 
 export default function ScanScreen() {
   const isFocused = useIsFocused();
+
   const [permission, requestPermission, refreshPermission] =
     useCameraPermissions();
 
   const pickerOpen = useRef(false);
+  const analyzingRef = useRef(false);
+  const requestId = useRef(0);
+
   const [photo, setPhoto] = useState<SelectedPhoto | null>(null);
+
   const [picking, setPicking] = useState(false);
   const [permissionBusy, setPermissionBusy] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+
+  const [prediction, setPrediction] = useState<WastePrediction | null>(null);
+
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    return () => {
+      requestId.current += 1;
+    };
+  }, []);
+
+  function acceptPhoto(selected: SelectedPhoto) {
+    requestId.current += 1;
+    setError(null);
+    setPrediction(null);
+    setPhoto(selected);
+  }
+
   async function choosePhoto() {
-    if (pickerOpen.current) {
+    if (pickerOpen.current || analyzingRef.current) {
       return;
     }
 
@@ -148,7 +183,7 @@ export default function ScanScreen() {
         base64: false,
       });
 
-      // Cancellation preserves any previously selected photo.
+      // Cancellation preserves the previous photo and result.
       if (result.canceled) {
         return;
       }
@@ -159,17 +194,52 @@ export default function ScanScreen() {
         throw new Error("No image returned");
       }
 
-      setPhoto({
+      acceptPhoto({
         uri: selected.uri,
         source: "library",
       });
     } catch {
       setError(
-        "The photo could not be opened. Try another image or check photo access in your device settings.",
+        "The photo could not be opened. Try another image or check photo access in device settings.",
       );
     } finally {
       pickerOpen.current = false;
       setPicking(false);
+    }
+  }
+
+  async function analyzePhoto() {
+    if (!photo || analyzingRef.current) {
+      return;
+    }
+
+    const current = ++requestId.current;
+
+    analyzingRef.current = true;
+    setAnalyzing(true);
+    setPrediction(null);
+    setError(null);
+
+    try {
+      const result = await classifyPhoto(photo.uri);
+
+      if (current === requestId.current) {
+        setPrediction(result);
+      }
+    } catch (reason) {
+      console.warn("Local waste classification failed:", reason);
+
+      if (current === requestId.current) {
+        setError(
+          "Analysis failed. Try another photo. If it keeps failing, check the terminal and confirm the development app was rebuilt.",
+        );
+      }
+    } finally {
+      analyzingRef.current = false;
+
+      if (current === requestId.current) {
+        setAnalyzing(false);
+      }
     }
   }
 
@@ -207,7 +277,13 @@ export default function ScanScreen() {
   }
 
   function useCamera() {
+    if (analyzingRef.current) {
+      return;
+    }
+
+    requestId.current += 1;
     setError(null);
+    setPrediction(null);
     setPhoto(null);
   }
 
@@ -216,7 +292,7 @@ export default function ScanScreen() {
       title={photo ? "Review your photo" : "Waste scanner"}
       description={
         photo
-          ? "Make sure the item is clear and easy to see."
+          ? "Check the item, then request a local AI suggestion."
           : "Take a photo or choose one from your library."
       }
     >
@@ -242,23 +318,70 @@ export default function ScanScreen() {
             }}
           />
 
-          <AppCard variant="soft">
-            <ThemedText type="smallBold">
-              {photo.source === "camera" ? "Photo captured" : "Photo selected"}
-            </ThemedText>
+          {prediction ? (
+            <AppCard variant="soft" accessibilityLiveRegion="polite">
+              <ThemedText type="smallBold">
+                Model suggestion · check before sorting
+              </ThemedText>
 
-            <ThemedText>
-              Review the item before continuing. AI classification and reward
-              verification are not connected yet.
-            </ThemedText>
-          </AppCard>
+              <ThemedText type="subtitle">
+                {MATERIAL_NAMES[prediction.label] ?? prediction.label}
+              </ThemedText>
 
-          <AppButton label="Choose another photo" onPress={choosePhoto} />
+              <ThemedText>
+                AI can misidentify materials. Check the item and your barangay’s
+                accepted waste categories before disposal.
+              </ThemedText>
+
+              <ThemedText type="small" themeColor="textSecondary">
+                Hazardous waste is not supported. A scan does not verify
+                disposal or earn reward points.
+              </ThemedText>
+            </AppCard>
+          ) : (
+            <AppCard variant="soft">
+              <ThemedText type="smallBold">
+                {analyzing ? "Analyzing on your phone…" : "Ready to analyze"}
+              </ThemedText>
+
+              <ThemedText>
+                Use one clear item. The model covers glass, metal, organic
+                material, paper/cardboard, plastic, and non-recyclable waste.
+              </ThemedText>
+            </AppCard>
+          )}
+
+          {Platform.OS === "ios" ? (
+            <AppButton
+              label={
+                analyzing
+                  ? "Analyzing…"
+                  : prediction
+                    ? "Analyze again"
+                    : "Analyze photo"
+              }
+              onPress={analyzePhoto}
+              loading={analyzing}
+            />
+          ) : (
+            <ThemedText themeColor="textSecondary">
+              Local classification is currently enabled in the iPhone
+              development build only.
+            </ThemedText>
+          )}
+
+          <AppButton
+            label="Choose another photo"
+            variant="secondary"
+            onPress={choosePhoto}
+            disabled={analyzing}
+          />
 
           <AppButton
             label={photo.source === "camera" ? "Retake photo" : "Use camera"}
             variant="secondary"
             onPress={useCamera}
+            disabled={analyzing}
           />
         </>
       ) : (
@@ -305,8 +428,10 @@ export default function ScanScreen() {
           ) : isFocused ? (
             <CaptureCamera
               onCapture={(uri) => {
-                setError(null);
-                setPhoto({ uri, source: "camera" });
+                acceptPhoto({
+                  uri,
+                  source: "camera",
+                });
               }}
               onChoosePhoto={choosePhoto}
             />

@@ -8,7 +8,8 @@
     "scheme": "cebucleanai",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.hurveen.cebucleanai"
     },
     "android": {
       "adaptiveIcon": {
@@ -33,7 +34,24 @@
           "imageWidth": 76
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow CebuCleanAI to take photos of waste for sorting guidance.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow CebuCleanAI to access waste photos you choose for sorting guidance.",
+          "cameraPermission": "Allow CebuCleanAI to take photos of waste for sorting guidance.",
+          "microphonePermission": false
+        }
+      ],
+      "onnxruntime-react-native",
+      "./plugins/with-onnx-ios"
     ],
     "experiments": {
       "typedRoutes": true,
