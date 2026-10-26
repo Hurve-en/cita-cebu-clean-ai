@@ -1,3 +1,4 @@
+import { useOfficer } from "@/features/officer/officer-state";
 import { useState } from "react";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useResident } from "@/features/resident/resident-state";
@@ -16,6 +17,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function AccountScreen() {
   const params = useLocalSearchParams<{ mode?: string }>();
   const { state, dispatch } = useResident();
+  const { session: officerSession, startDemo } = useOfficer();
   const [mode, setMode] = useState<Mode>(
     params.mode === "register" ? "register" : "login",
   );
@@ -27,6 +29,7 @@ export default function AccountScreen() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   if (state.profile) return <Redirect href="/(tabs)/home" />;
+  if (officerSession) return <Redirect href="/officer" />;
   function changeMode(next: Mode) {
     setMode(next);
     setError("");
@@ -198,6 +201,14 @@ export default function AccountScreen() {
                 secondary
                 label="Try the demo · no login needed"
                 onPress={() => enterDemo(true)}
+              />
+              <Button
+                secondary
+                label="Officer demo · Development only"
+                onPress={() => {
+                  startDemo();
+                  router.replace("/officer");
+                }}
               />
               <Button
                 secondary
