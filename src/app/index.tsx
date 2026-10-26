@@ -1,160 +1,132 @@
-import { Platform, ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-import { ThemedText } from "@/components/themed-text";
-import { AppButton } from "@/components/ui/app-button";
-import { AppCard } from "@/components/ui/app-card";
-import { BottomTabInset, Spacing } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-
-export default function HomeScreen() {
-  const theme = useTheme();
-
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
+import { Redirect, router } from "expo-router";
+import { useResident } from "@/features/resident/resident-state";
+import {
+  Button,
+  Card,
+  Copy,
+  Heading,
+  Icon,
+  Page,
+  palette,
+  ui,
+} from "@/features/resident/resident-ui";
+const slides = [
+  {
+    title: "A cleaner Cebu starts with us.",
+    label: "SMALL HABITS. SHARED IMPACT.",
+    heading: "Give every item a better next step.",
+    description:
+      "Sort with care, stay informed, and help keep your neighborhood clean.",
+    icon: "leaf" as const,
+  },
+  {
+    title: "Less guessing. Better sorting.",
+    label: "YOUR EVERYDAY SORTING GUIDE",
+    heading: "Point. Scan. Check.",
+    description:
+      "Take a clear photo for a material suggestion. Always check local disposal rules before sorting.",
+    icon: "scan" as const,
+  },
+  {
+    title: "Feel closer to your community.",
+    label: "BE PART OF SOMETHING CLEANER",
+    heading: "Know what happens around you.",
+    description:
+      "Find collection information and report waste concerns from one place.",
+    icon: "home" as const,
+  },
+];
+export default function WelcomeScreen() {
+  const { state } = useResident();
+  const [step, setStep] = useState(0);
+  if (state.profile) return <Redirect href="/(tabs)/home" />;
+  const slide = slides[step];
   return (
-    <SafeAreaView
-      edges={["top", "left", "right", "bottom"]}
-      style={[styles.screen, { backgroundColor: theme.background }]}
+    <Page
+      title={slide.title}
+      subtitle="Simple tools for more responsible waste habits."
     >
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+      <View
+        style={[
+          ui.hero,
+          { alignItems: "center", paddingVertical: 40, gap: 22 },
+        ]}
       >
-        <View style={styles.header}>
-          <ThemedText style={styles.brand} themeColor="primary">
-            CebuCleanAI
-          </ThemedText>
-
-          <ThemedText type="small" themeColor="textSecondary">
-            Resident app · Design preview
-          </ThemedText>
-        </View>
-
-        <View style={styles.introduction}>
-          <ThemedText type="title" accessibilityRole="header">
-            Small actions.{"\n"}Cleaner Cebu.
-          </ThemedText>
-
-          <ThemedText themeColor="textSecondary">
-            Start with what’s in your hand.
-          </ThemedText>
-        </View>
-
-        <AppCard style={styles.hero}>
-          <ThemedText type="smallBold" style={styles.heroEyebrow}>
-            SORT SMARTER
-          </ThemedText>
-
-          <ThemedText
-            type="subtitle"
-            style={styles.heroText}
-            accessibilityRole="header"
-          >
-            Not sure where it goes?
-          </ThemedText>
-
-          <ThemedText style={styles.heroText}>
-            Scan an item for sorting guidance.
-          </ThemedText>
-
-          <AppButton
-            label="Scan waste"
-            onPress={() => undefined}
-            disabled
-            accessibilityHint="Scanning is not available in this preview."
-          />
-
-          <ThemedText type="small" style={styles.heroText}>
-            Scanning is not connected yet.
-          </ThemedText>
-        </AppCard>
-
-        <AppCard>
-          <ThemedText type="smallBold" themeColor="primary">
-            COLLECTION PREVIEW · SAMPLE DATA
-          </ThemedText>
-
-          <ThemedText style={styles.cardHeading} accessibilityRole="header">
-            Recyclables
-          </ThemedText>
-
-          <ThemedText themeColor="textSecondary">
-            Example window: Monday, 6:00–8:00 AM.
-          </ThemedText>
-
-          <ThemedText type="small" themeColor="textSecondary">
-            No barangay is selected. Confirm collection times with your barangay
-            before setting waste out.
-          </ThemedText>
-        </AppCard>
-
-        <AppCard variant="soft">
-          <ThemedText style={styles.cardHeading} accessibilityRole="header">
-            A small tip for today
-          </ThemedText>
-
-          <ThemedText themeColor="textSecondary">
-            Empty containers and rinse them when needed. Check which materials
-            your local collection accepts.
-          </ThemedText>
-        </AppCard>
-
-        <ThemedText
-          type="small"
-          themeColor="textSecondary"
-          style={styles.footer}
+        <Text style={[ui.eyebrow, { textAlign: "center" }]}>{slide.label}</Text>
+        <View
+          style={{
+            width: 124,
+            height: 124,
+            borderRadius: 44,
+            backgroundColor: palette.lime,
+            alignItems: "center",
+            justifyContent: "center",
+            borderWidth: 10,
+            borderColor: "#387558",
+          }}
         >
-          Development preview. Account services, scanning, schedules, and
-          reporting are not connected.
-        </ThemedText>
-      </ScrollView>
-    </SafeAreaView>
+          <Icon name={slide.icon} size={52} />
+        </View>
+        <Text style={[ui.heroTitle, { textAlign: "center", fontSize: 25 }]}>
+          {slide.heading}
+        </Text>
+        <Text style={[ui.heroCopy, { textAlign: "center" }]}>
+          {slide.description}
+        </Text>
+      </View>
+      <View style={{ flexDirection: "row", alignSelf: "center", gap: 6 }}>
+        {slides.map((_, index) => (
+          <Pressable
+            key={index}
+            accessibilityRole="button"
+            accessibilityLabel={`Introduction ${index + 1} of 3`}
+            accessibilityState={{ selected: step === index }}
+            onPress={() => setStep(index)}
+            style={{
+              minWidth: 44,
+              minHeight: 44,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <View
+              style={{
+                height: 6,
+                width: step === index ? 28 : 8,
+                borderRadius: 3,
+                backgroundColor: step === index ? palette.green : "#C4D0C5",
+              }}
+            />
+          </Pressable>
+        ))}
+      </View>
+      <Button
+        label={step < 2 ? "Next" : "Create an account"}
+        onPress={() =>
+          step < 2
+            ? setStep(step + 1)
+            : router.push({
+                pathname: "/account",
+                params: { mode: "register" },
+              })
+        }
+      />
+      <Button
+        secondary
+        label="I already have an account"
+        onPress={() =>
+          router.push({ pathname: "/account", params: { mode: "login" } })
+        }
+      />
+      <Card>
+        <Heading>Try it first</Heading>
+        <Copy>
+          This build is a demo. Explore with sample details; real accounts and
+          services are not connected.
+        </Copy>
+      </Card>
+    </Page>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    width: "100%",
-    maxWidth: 560,
-    alignSelf: "center",
-    paddingHorizontal: Spacing.four,
-    paddingTop: Platform.OS === "web" ? 96 : Spacing.four,
-    paddingBottom: BottomTabInset + Spacing.five,
-    gap: Spacing.four,
-  },
-  header: {
-    gap: Spacing.two,
-  },
-  brand: {
-    fontSize: 20,
-    lineHeight: 32,
-    fontWeight: "800",
-  },
-  introduction: {
-    gap: Spacing.two,
-  },
-  hero: {
-    backgroundColor: "#16634A",
-  },
-  heroEyebrow: {
-    color: "#D6F58A",
-    letterSpacing: 1,
-  },
-  heroText: {
-    color: "#FFFFFF",
-  },
-  cardHeading: {
-    fontSize: 20,
-    lineHeight: 32,
-    fontWeight: "700",
-  },
-  footer: {
-    textAlign: "center",
-  },
-});
