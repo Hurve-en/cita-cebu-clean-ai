@@ -1,6 +1,4 @@
 import { useOfficer } from "@/features/officer/officer-state";
-import { useState } from "react";
-import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useResident } from "@/features/resident/resident-state";
 import {
   Button,
@@ -12,6 +10,8 @@ import {
   Message,
   Page,
 } from "@/features/resident/resident-ui";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 type Mode = "login" | "register" | "forgot" | "reset" | "verify";
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function AccountScreen() {
@@ -209,6 +209,11 @@ export default function AccountScreen() {
                   startDemo();
                   router.replace("/officer");
                 }}
+              />
+              <Button
+                secondary
+                label="Admin demo · Development only"
+                onPress={() => router.push("/admin")}
               />
               <Button
                 secondary
