@@ -1,38 +1,43 @@
 import { Tabs } from "expo-router";
-import { SymbolView } from "expo-symbols";
 
-import { useTheme } from "@/hooks/use-theme";
+import { Icon, palette } from "@/features/resident/resident-ui";
 
 export default function AppTabs() {
-  const theme = useTheme();
-
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: theme.textSecondary,
+        tabBarActiveTintColor: palette.green,
+        tabBarInactiveTintColor: palette.muted,
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          backgroundColor: theme.backgroundElement,
-          borderTopColor: theme.border,
+          backgroundColor: palette.white,
+          borderTopColor: palette.border,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: "600",
         },
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: "Home",
-          tabBarAccessibilityLabel: "Home",
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{ ios: "house", android: "home", web: "home" }}
-              tintColor={color}
-              size={24}
+          tabBarIcon: ({ focused }) => (
+            <Icon name="home" color={focused ? palette.green : palette.muted} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="schedules"
+        options={{
+          title: "Schedules",
+          tabBarIcon: ({ focused }) => (
+            <Icon
+              name="calendar"
+              color={focused ? palette.green : palette.muted}
             />
           ),
         }}
@@ -42,35 +47,34 @@ export default function AppTabs() {
         name="scan"
         options={{
           title: "Scan",
-          tabBarAccessibilityLabel: "Scan waste",
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: "camera",
-                android: "photo_camera",
-                web: "photo_camera",
-              }}
-              tintColor={color}
-              size={24}
+          tabBarIcon: ({ focused }) => (
+            <Icon
+              name="scan"
+              color={focused ? palette.green : palette.muted}
+              size={26}
             />
           ),
         }}
       />
 
       <Tabs.Screen
-        name="schedules"
+        name="rewards"
         options={{
-          title: "Schedules",
-          tabBarAccessibilityLabel: "Collection schedules",
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: "calendar",
-                android: "calendar_month",
-                web: "calendar_month",
-              }}
-              tintColor={color}
-              size={24}
+          title: "Rewards",
+          tabBarIcon: ({ focused }) => (
+            <Icon name="gift" color={focused ? palette.green : palette.muted} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ focused }) => (
+            <Icon
+              name="person"
+              color={focused ? palette.green : palette.muted}
             />
           ),
         }}
