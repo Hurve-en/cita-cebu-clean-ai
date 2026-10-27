@@ -1,3 +1,4 @@
+import { installStorageFixture } from './support/storage-fixture.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,6 +25,7 @@ try {
     grant usage on schema auth to anon, authenticated;
     grant execute on function auth.uid() to anon, authenticated;
   `);
+  await installStorageFixture(database);
   for(const name of stageMigrations(backend)) await database.exec(fs.readFileSync(path.join(root,'supabase/migrations',name),'utf8'));
   const verification=await database.exec(fs.readFileSync(path.join(root,'supabase/verify_report_submission.sql'),'utf8'));
   assert.deepEqual(verification[0]?.rows,[{authenticated_submit:true,anonymous_submit:false,receipt_rls:true}]);

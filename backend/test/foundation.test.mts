@@ -1,3 +1,4 @@
+import { installStorageFixture } from './support/storage-fixture.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -20,7 +21,9 @@ assert.deepEqual(names, [
   '20261027070020_community_access.sql',
   '20261027115243_report_submission_receipts.sql',
   '20261027115510_resident_report_submission.sql',
-], 'deployed history stays fixed; two submission migrations append');
+  '20261027143037_resident_media_tables.sql',
+  '20261027143038_resident_media_security.sql',
+], 'deployed history stays fixed; two media migrations append');
 const before = fs.readFileSync(path.join(backend, 'migration-map.json'), 'utf8');
 stageMigrations(backend);
 assert.equal(fs.readFileSync(path.join(backend, 'migration-map.json'), 'utf8'), before);
@@ -79,6 +82,7 @@ try {
     grant usage on schema auth to anon, authenticated;
     grant execute on function auth.uid() to anon, authenticated;
   `);
+  await installStorageFixture(database);
   for (const name of names) {
     const migration = fs.readFileSync(path.join(root, 'supabase/migrations', name), 'utf8');
     assert.doesNotMatch(migration, /create\s+(?:schema\s+"?auth"?|table\s+"?auth"?\.)/i);

@@ -1,3 +1,4 @@
+import { ReportPhotoPanel, ScanHistory, SavedScan } from './media-ui';
 import { BarangayPicker } from "./barangay-picker";
 import { ReportSubmission } from "./report-submission-ui";
 import { SortingGuide } from "./sorting-guide";
@@ -123,8 +124,7 @@ export function LiveHome() {
           Small actions.{"\n"}Cleaner surroundings.
         </Text>
         <Text style={ui.heroCopy}>
-          Use a photo for sorting guidance. Results are suggestions and are not
-          saved to your account yet.
+          Use a photo for sorting guidance. Results are suggestions. Completed scans save their photo and result to your account; check the save status after analysis.
         </Text>
         <Button
           label="Scan an item"
@@ -306,7 +306,7 @@ export function LiveProfile() {
       <MenuItem
         icon="history"
         title="Scan history"
-        detail="Account saving is not available yet"
+        detail="Your saved photos and sorting suggestions"
         onPress={() => openDetail("history")}
       />
       <MenuItem
@@ -375,16 +375,17 @@ function Reports() {
         onPress={() => void actions.loadReports()}
       />
       <Button label="Report a waste concern" onPress={() => openDetail("new-report")} />
-      <Copy>Reports accept text details. Photo attachments are not available yet.</Copy>
+      <Copy>You can add an optional photo from your saved report details.</Copy>
     </Page>
   );
 }
 function ReportDetail({ id }: { id: string }) {
-  const { state, actions } = useLiveResident();
+  const { enabled, state, actions } = useLiveResident();
   useEffect(() => {
+    if (!enabled || !state.owner) return;
     void actions.openReport(id);
     return () => actions.closeReport();
-  }, [actions, id]);
+  }, [actions, id, enabled, state.owner]);
   const detail = state.detail.id === id ? state.detail : null;
   const row = detail?.report.value;
   return (
@@ -415,6 +416,11 @@ function ReportDetail({ id }: { id: string }) {
             <Copy>Submitted {dateLabel(row.created_at)}</Copy>
             <Copy>Updated {dateLabel(row.updated_at)}</Copy>
           </Card>
+        </>
+      )}
+      <ReportPhotoPanel key={id} reportId={id} available={Boolean(row)} />
+      {row && (
+        <>
           <Section title="Report activity" />
           <Feedback
             data={detail!.events}
@@ -592,8 +598,18 @@ function ScheduleDetail({ id }: { id: string }) {
 }
 export function LiveDetail({ view, id }: { view: string; id: string }) {
   const { state: auth } = useAuth();
-  const { enabled, state } = useLiveResident();
-  if (!enabled) return <Redirect href="/workspace" />;
+  const { enabled } = useLiveResident();
+  if (!auth.user || (!enabled && auth.phase !== "loading")) return <Redirect href="/workspace" />;
+  return <View style={{ flex: 1, display: enabled ? "flex" : "none" }}>
+    <LiveDetailContent key={auth.user.id} view={view} id={id} />
+  </View>;
+}
+function LiveDetailContent({ view, id }: { view: string; id: string }) {
+  const { state: auth } = useAuth();
+  const { state } = useLiveResident();
+
+  if (view === "history") return <ScanHistory />;
+  if (view === "scan-record") return <SavedScan key={id} id={id} />;
   if (view === "new-report") return <ReportSubmission key={auth.user!.id} />;
   if (view === "reports") return <Reports />;
   if (view === "report")
@@ -633,8 +649,7 @@ export function LiveDetail({ view, id }: { view: string; id: string }) {
             here is resident-visible activity. You can submit text reports to your selected barangay.
           </Copy>
           <Copy>
-            Scanning provides guidance on this device. Account scan history
-            and photo uploads are not available yet.
+            Classification runs on this device. Completed scans upload a resized photo and model suggestion to your private account history. You can remove saved scans and report photos. Interrupted uploads keep a retry copy on the original device until confirmed or removed.
           </Copy>
           <Copy>
             For collection changes or urgent waste concerns, contact your

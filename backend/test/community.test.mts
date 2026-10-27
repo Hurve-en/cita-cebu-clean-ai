@@ -1,3 +1,4 @@
+import { installStorageFixture } from './support/storage-fixture.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -29,6 +30,7 @@ try {
     grant usage on schema auth to anon, authenticated;
     grant execute on function auth.uid() to anon, authenticated;
   `);
+  await installStorageFixture(database);
   for (const name of names) {
     await database.exec(fs.readFileSync(path.join(root, 'supabase/migrations', name), 'utf8'));
   }

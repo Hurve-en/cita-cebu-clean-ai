@@ -59,7 +59,7 @@ export function ReportSubmission() {
           <Card>
             <Text style={ui.badge}>{state.result ? statusLabel(state.result.report.status) : "Saved"}</Text>
             <Heading>{state.result?.report.title}</Heading>
-            <Copy>Your report is saved to your account. You can follow its status in My reports.</Copy>
+            <Copy>Your report is saved to your account. Open it to add an optional photo and follow its status.</Copy>
             <Copy>Submission does not confirm a collection visit or response time. Contact your barangay for urgent concerns.</Copy>
           </Card>
           <Message error text={state.error} />
@@ -97,7 +97,7 @@ export function ReportSubmission() {
             value={pending?.description ?? description} onChangeText={setDescription} editable={!locked}
             multiline maxLength={2000} style={{ minHeight: 140, textAlignVertical: "top" }} />
           <Copy>{(pending?.description ?? description).length.toLocaleString()} / 2,000 characters · At least 10 characters</Copy>
-          <View><Copy>Photo attachments are not available yet. Avoid including private information about other people.</Copy></View>
+          <View><Copy>After submitting, open your report to add an optional photo. Avoid including private information about other people.</Copy></View>
           <Message error text={state.error} />
           <Button disabled={state.phase === "sending" || state.phase === "blocked" || (!locked && !newReady)}
             label={state.phase === "sending" ? "Confirming submission…" : state.phase === "uncertain" ? "Retry / confirm saved submission" : "Submit report"}

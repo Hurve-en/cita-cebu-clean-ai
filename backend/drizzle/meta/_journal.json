@@ -43,6 +43,20 @@
       "when": 1793102110684,
       "tag": "0005_resident_report_submission",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793111437919,
+      "tag": "0006_resident_media_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793111438698,
+      "tag": "0007_resident_media_security",
+      "breakpoints": true
     }
   ]
 }
