@@ -1,0 +1,25 @@
+{
+  "name": "cebucleanai-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20.19" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate --config=drizzle.config.mts",
+    "db:custom": "drizzle-kit generate --custom --config=drizzle.config.mts",
+    "db:stage": "node scripts/stage-migrations.mjs",
+    "test": "node --import tsx test/foundation.test.mts"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.4",
+    "postgres": "3.4.8"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.14",
+    "@types/node": "22.19.0",
+    "drizzle-kit": "0.31.11",
+    "tsx": "4.20.6",
+    "typescript": "6.0.3"
+  }
+}

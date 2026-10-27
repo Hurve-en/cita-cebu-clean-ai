@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "source": "0000_identity_tables.sql",
+      "target": "20261027061413_identity_tables.sql",
+      "sha256": "3c76ce892b2be159fa0ecf275732ed2bec88b31c114325c649ed3760d5a780d7"
+    },
+    {
+      "source": "0001_identity_security.sql",
+      "target": "20261027061427_identity_security.sql",
+      "sha256": "881d6b2af6b27eeb238564fa5d4750edf1c7b426c9aea1aed1f04874460f6450"
+    }
+  ]
+}
