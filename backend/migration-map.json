@@ -10,6 +10,16 @@
       "source": "0001_identity_security.sql",
       "target": "20261027061427_identity_security.sql",
       "sha256": "881d6b2af6b27eeb238564fa5d4750edf1c7b426c9aea1aed1f04874460f6450"
+    },
+    {
+      "source": "0002_community_tables.sql",
+      "target": "20261027065955_community_tables.sql",
+      "sha256": "d93aceb6d38cc317d978bee9f9b58db3612b56a1ca284beb0ea063d54734dab2"
+    },
+    {
+      "source": "0003_community_access.sql",
+      "target": "20261027070020_community_access.sql",
+      "sha256": "c0df50cada89b79df0379a4547021718fc4d4e4877322e51dfe214d35b8ccc53"
     }
   ]
 }

@@ -15,6 +15,20 @@
       "when": 1793081667056,
       "tag": "0001_identity_security",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793084395187,
+      "tag": "0002_community_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793084420370,
+      "tag": "0003_community_access",
+      "breakpoints": true
     }
   ]
 }
