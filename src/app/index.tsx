@@ -1,3 +1,4 @@
+import { useAuth } from "@/features/auth/auth-state";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { Redirect, router } from "expo-router";
@@ -40,11 +41,15 @@ const slides = [
 ];
 export default function WelcomeScreen() {
   const { state } = useResident();
+  const auth = useAuth();
   const [step, setStep] = useState(0);
+  if (auth.state.user) return <Redirect href="/workspace" />;
+  if (auth.state.phase === "loading") return <Page title="Opening CebuCleanAI" badge="Account access"><Copy>Checking your session…</Copy></Page>;
   if (state.profile) return <Redirect href="/(tabs)/home" />;
   const slide = slides[step];
   return (
     <Page
+      badge="Welcome"
       title={slide.title}
       subtitle="Simple tools for more responsible waste habits."
     >
@@ -121,10 +126,9 @@ export default function WelcomeScreen() {
         }
       />
       <Card>
-        <Heading>Try it first</Heading>
+        <Heading>Your community account</Heading>
         <Copy>
-          This build is a demo. Explore with sample details; real accounts and
-          services are not connected.
+          Create an account or sign in to manage your account. Community workflows are being connected in stages.
         </Copy>
       </Card>
     </Page>
