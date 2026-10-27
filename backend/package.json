@@ -11,7 +11,7 @@
     "db:generate": "drizzle-kit generate --config=drizzle.config.mts",
     "db:custom": "drizzle-kit generate --custom --config=drizzle.config.mts",
     "db:stage": "node scripts/stage-migrations.mjs",
-    "test": "node --import tsx test/foundation.test.mts && node --import tsx test/community.test.mts"
+    "test": "node --import tsx test/foundation.test.mts && node --import tsx test/community.test.mts && node --import tsx test/report-submission.test.mts"
   },
   "dependencies": {
     "drizzle-orm": "0.45.4",

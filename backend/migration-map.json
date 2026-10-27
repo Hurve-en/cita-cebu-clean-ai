@@ -20,6 +20,16 @@
       "source": "0003_community_access.sql",
       "target": "20261027070020_community_access.sql",
       "sha256": "c0df50cada89b79df0379a4547021718fc4d4e4877322e51dfe214d35b8ccc53"
+    },
+    {
+      "source": "0004_report_submission_receipts.sql",
+      "target": "20261027115243_report_submission_receipts.sql",
+      "sha256": "0e1f990f11d62d67c13761634e359d5bf50a6d08e4817c037e59b6374fd73e13"
+    },
+    {
+      "source": "0005_resident_report_submission.sql",
+      "target": "20261027115510_resident_report_submission.sql",
+      "sha256": "e7b35a9b7cbc04bcb482ef937e2b94696ea891ca4d6c6f58f06df7623090a803"
     }
   ]
 }

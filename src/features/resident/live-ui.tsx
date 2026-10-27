@@ -1,3 +1,5 @@
+import { BarangayPicker } from "./barangay-picker";
+import { ReportSubmission } from "./report-submission-ui";
 import { SortingGuide } from "./sorting-guide";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Redirect, router } from "expo-router";
@@ -189,7 +191,7 @@ export function LiveHome() {
       <MenuItem
         icon="report"
         title="Report a waste concern"
-        detail="Submission is being connected"
+        detail="Send a report to your selected barangay"
         onPress={() => openDetail("new-report")}
       />
       <Section title="Sorting guide" />
@@ -372,10 +374,8 @@ function Reports() {
         label="Refresh reports"
         onPress={() => void actions.loadReports()}
       />
-      <Copy>
-        New report submission and photo attachments will be enabled after their
-        trusted workflows are connected.
-      </Copy>
+      <Button label="Report a waste concern" onPress={() => openDetail("new-report")} />
+      <Copy>Reports accept text details. Photo attachments are not available yet.</Copy>
     </Page>
   );
 }
@@ -481,44 +481,11 @@ function ProfileForm({ profile }: { profile: Profile }) {
         autoComplete="name"
         editable={!state.saving}
       />
-      <Heading>Your barangay</Heading>
-      <Copy>
-        Changing community updates your collection information. Your existing
-        reports keep their original community and remain yours.
-      </Copy>
-      <Feedback
-        data={state.barangays}
-        retry={() => void actions.loadBarangays()}
-        empty={
-          state.barangays.loaded && !state.barangays.value.length
-            ? "No active barangays configured"
-            : undefined
-        }
-      />
-      {barangay && !state.barangays.value.some((b) => b.id === barangay) && (
-        <Copy>
-          Your existing barangay selection is retained. Load more options or
-          choose another community.
-        </Copy>
-      )}
-      {state.barangays.value.map((b) => (
-        <Button
-          secondary
-          disabled={state.saving}
-          key={b.id}
-          label={`${barangay === b.id ? "Selected: " : ""}${b.name}`}
-          onPress={() => setBarangay(b.id)}
-        />
-      ))}
-      <More
-        data={state.barangays}
-        load={() => void actions.loadBarangays(true)}
-      />
-      <Button
-        secondary
+      <BarangayPicker
+        value={barangay}
+        selectedName={barangay === profile.resident_barangay_id ? profile.barangay_name : null}
         disabled={state.saving}
-        label={barangay === null ? "Selected: Choose later" : "Choose later"}
-        onPress={() => setBarangay(null)}
+        onChange={setBarangay}
       />
       <Message error text={state.saveError} />
       <Message text={state.notice} />
@@ -627,6 +594,7 @@ export function LiveDetail({ view, id }: { view: string; id: string }) {
   const { state: auth } = useAuth();
   const { enabled, state } = useLiveResident();
   if (!enabled) return <Redirect href="/workspace" />;
+  if (view === "new-report") return <ReportSubmission key={auth.user!.id} />;
   if (view === "reports") return <Reports />;
   if (view === "report")
     return <ReportDetail key={`${auth.user?.id}:${id}`} id={id} />;
@@ -662,7 +630,7 @@ export function LiveDetail({ view, id }: { view: string; id: string }) {
           <Copy>
             Profiles, published schedules and your reports are retrieved from
             Supabase using your authenticated session. Report activity shown
-            here is resident-visible activity.
+            here is resident-visible activity. You can submit text reports to your selected barangay.
           </Copy>
           <Copy>
             Scanning provides guidance on this device. Account scan history
