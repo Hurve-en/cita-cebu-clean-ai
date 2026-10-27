@@ -1,3 +1,5 @@
+import { useAuth } from "@/features/auth/auth-state";
+import { LiveSchedules } from "@/features/resident/live-ui";
 import { Text, View } from "react-native";
 import { useState } from "react";
 import { SAMPLE_SCHEDULES } from "@/features/resident/resident-data";
@@ -14,7 +16,7 @@ import {
   Section,
   ui,
 } from "@/features/resident/resident-ui";
-export default function SchedulesScreen() {
+function DemoSchedulesScreen() {
   const { state } = useResident();
   const [showSamples, setShowSamples] = useState(false);
   return (
@@ -74,4 +76,9 @@ export default function SchedulesScreen() {
       />
     </Page>
   );
+}
+
+export default function SchedulesScreen() {
+  const { state } = useAuth();
+  return state.user ? <LiveSchedules /> : <DemoSchedulesScreen />;
 }
