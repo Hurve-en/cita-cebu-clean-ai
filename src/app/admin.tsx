@@ -1,3 +1,4 @@
+import { useDemo } from "@/features/auth/demo-state";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
@@ -153,6 +154,7 @@ function Metric({
 }
 
 export default function AdminScreen() {
+  const demo = useDemo();
   const [section, setSection] = useState<Section>("overview");
   const [officers, setOfficers] = useState<Officer[]>(() =>
     INITIAL_OFFICERS.map((item) => ({ ...item })),
@@ -366,7 +368,7 @@ export default function AdminScreen() {
         { text: "Stay", style: "cancel" },
         {
           text: "Leave preview",
-          onPress: () => router.replace("/account"),
+          onPress: () => { demo.end(); router.replace("/account"); },
         },
       ],
     );

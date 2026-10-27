@@ -136,11 +136,13 @@ export function Page({
   back = false,
   children,
   accessory,
+  badge = "Demo preview",
 }: PropsWithChildren<{
   title: string;
   subtitle?: string;
   back?: boolean;
   accessory?: ReactNode;
+  badge?: string;
 }>) {
   return (
     <SafeAreaView
@@ -188,7 +190,7 @@ export function Page({
           <View style={ui.body}>
             <View style={ui.demoPill}>
               <View style={ui.dot} />
-              <Text style={ui.demo}>Demo preview</Text>
+              <Text style={ui.demo}>{badge}</Text>
             </View>
 
             {children}
