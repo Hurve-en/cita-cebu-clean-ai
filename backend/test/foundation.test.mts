@@ -13,7 +13,12 @@ import { createServerDatabase } from '../db/server-client.mjs';
 const backend = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const root = path.dirname(backend);
 const names = stageMigrations(backend);
-assert.equal(names.length, 2, 'this initial foundation has two staged migrations');
+assert.deepEqual(names, [
+  '20261027061413_identity_tables.sql',
+  '20261027061427_identity_security.sql',
+  '20261027065955_community_tables.sql',
+  '20261027070020_community_access.sql',
+], 'identity history stays fixed; two community migrations append');
 const before = fs.readFileSync(path.join(backend, 'migration-map.json'), 'utf8');
 stageMigrations(backend);
 assert.equal(fs.readFileSync(path.join(backend, 'migration-map.json'), 'utf8'), before);

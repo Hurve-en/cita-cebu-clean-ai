@@ -3,13 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20.19" },
+  "engines": {
+    "node": ">=20.19"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate --config=drizzle.config.mts",
     "db:custom": "drizzle-kit generate --custom --config=drizzle.config.mts",
     "db:stage": "node scripts/stage-migrations.mjs",
-    "test": "node --import tsx test/foundation.test.mts"
+    "test": "node --import tsx test/foundation.test.mts && node --import tsx test/community.test.mts"
   },
   "dependencies": {
     "drizzle-orm": "0.45.4",
