@@ -1,3 +1,5 @@
+import { useAuth } from "@/features/auth/auth-state";
+import { LiveHome } from "@/features/resident/live-ui";
 import { Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useResident } from "@/features/resident/resident-state";
@@ -20,7 +22,7 @@ const categories = [
   { name: "Plastic", hint: "Check local acceptance", mark: "05" },
   { name: "Non-recyclable", hint: "Residual materials", mark: "06" },
 ];
-export default function HomeScreen() {
+function DemoHomeScreen() {
   const { state } = useResident();
   return (
     <Page
@@ -114,4 +116,9 @@ export default function HomeScreen() {
       />
     </Page>
   );
+}
+
+export default function HomeScreen() {
+  const { state } = useAuth();
+  return state.user ? <LiveHome /> : <DemoHomeScreen />;
 }

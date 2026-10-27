@@ -1,3 +1,5 @@
+import { useAuth } from "@/features/auth/auth-state";
+import { LiveProfile } from "@/features/resident/live-ui";
 import { Redirect } from "expo-router";
 import { useState } from "react";
 import { Text, View } from "react-native";
@@ -16,7 +18,7 @@ import {
   ui,
 } from "@/features/resident/resident-ui";
 
-export default function ProfileScreen() {
+function DemoProfileScreen() {
   const { state, dispatch } = useResident();
   const [confirmingLogout, setConfirmingLogout] = useState(false);
 
@@ -144,4 +146,9 @@ export default function ProfileScreen() {
       />
     </Page>
   );
+}
+
+export default function ProfileScreen() {
+  const { state } = useAuth();
+  return state.user ? <LiveProfile /> : <DemoProfileScreen />;
 }

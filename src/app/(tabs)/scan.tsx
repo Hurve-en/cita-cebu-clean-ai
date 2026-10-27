@@ -1,3 +1,4 @@
+import { useAuth } from "@/features/auth/auth-state";
 import { useResident } from "@/features/resident/resident-state";
 import { newRecordId } from "@/features/resident/resident-model";
 import { Brand } from "@/components/brand";
@@ -275,7 +276,7 @@ function CaptureCamera({
     </>
   );
 }
-export default function ScanScreen() {
+function ScanExperience({ live }: { live: boolean }) {
   const isFocused = useIsFocused();
   const { state, saveScan } = useResident();
   const scanId = useRef<string | null>(null);
@@ -367,7 +368,7 @@ export default function ScanScreen() {
   }
 
   async function persistPrediction(result: WastePrediction, operation: number) {
-    if (!photo || saveBusy.current) return;
+    if (live || !photo || saveBusy.current) return;
     const id = scanId.current ?? newRecordId();
     scanId.current = id;
     saveBusy.current = true;
@@ -611,11 +612,13 @@ export default function ScanScreen() {
                 </Panel>
                 <View accessibilityLiveRegion="polite">
                   <Text style={s.copy}>
-                    {savingHistory
-                      ? "Saving photo and result on this device…"
-                      : historySaved
-                        ? "Saved to scan history on this device."
-                        : "Result ready. History has not been saved yet."}
+                    {live
+                      ? "Result ready for this session. Account scan history is not connected; this photo and result have not been saved."
+                      : savingHistory
+                        ? "Saving photo and result on this device…"
+                        : historySaved
+                          ? "Saved to scan history on this device."
+                          : "Result ready. History has not been saved yet."}
                   </Text>
                 </View>
                 {!!historyError && (
@@ -623,12 +626,12 @@ export default function ScanScreen() {
                     {historyError}
                   </Text>
                 )}
-                {!!state.storageError && (
+                {!live && !!state.storageError && (
                   <Text accessibilityRole="alert" style={s.error}>
                     {state.storageError}
                   </Text>
                 )}
-                {!historySaved && !savingHistory && (
+                {!live && !historySaved && !savingHistory && (
                   <Action
                     secondary
                     label="Retry saving scan"
@@ -639,12 +642,14 @@ export default function ScanScreen() {
                     }}
                   />
                 )}
-                <Action
-                  secondary
-                  label="View scan history"
-                  disabled={blocked}
-                  onPress={() => openDetail("history")}
-                />
+                {!live && (
+                  <Action
+                    secondary
+                    label="View scan history"
+                    disabled={blocked}
+                    onPress={() => openDetail("history")}
+                  />
+                )}
                 <Action
                   label="Scan another item"
                   onPress={useCamera}
@@ -1139,3 +1144,8 @@ const s = StyleSheet.create({
   errorBox: { backgroundColor: "#FBECEE", padding: 14, borderRadius: 14 },
   error: { color: "#A12D39", fontSize: 13, lineHeight: 21 },
 });
+
+export default function ScanScreen() {
+  const { state } = useAuth();
+  return <ScanExperience key={state.user?.id ?? "demo"} live={Boolean(state.user)} />;
+}

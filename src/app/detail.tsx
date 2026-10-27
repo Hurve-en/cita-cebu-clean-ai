@@ -1,3 +1,5 @@
+import { useAuth } from "@/features/auth/auth-state";
+import { LiveDetail } from "@/features/resident/live-ui";
 import { Redirect, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
@@ -24,6 +26,7 @@ import {
 } from "@/features/resident/resident-ui";
 
 export default function DetailScreen() {
+  const auth = useAuth();
   const params = useLocalSearchParams<{
     view?: string;
     id?: string;
@@ -32,6 +35,14 @@ export default function DetailScreen() {
   const view = typeof params.view === "string" ? params.view : "";
   const id = typeof params.id === "string" ? params.id : "";
 
+  if (auth.state.user)
+    return (
+      <LiveDetail
+        key={`${auth.state.user.id}:${view}:${id}`}
+        view={view}
+        id={id}
+      />
+    );
   return <DetailContent key={`${view}:${id}`} view={view} id={id} />;
 }
 

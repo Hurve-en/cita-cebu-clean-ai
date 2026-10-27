@@ -1,3 +1,5 @@
+import { useAuth } from "@/features/auth/auth-state";
+import { LiveRewards } from "@/features/resident/live-ui";
 import { Text, View } from "react-native";
 import { REWARDS, useResident } from "@/features/resident/resident-state";
 import {
@@ -11,7 +13,7 @@ import {
   Section,
   ui,
 } from "@/features/resident/resident-ui";
-export default function RewardsScreen() {
+function DemoRewardsScreen() {
   const { state } = useResident();
   return (
     <Page
@@ -61,4 +63,9 @@ export default function RewardsScreen() {
       />
     </Page>
   );
+}
+
+export default function RewardsScreen() {
+  const { state } = useAuth();
+  return state.user ? <LiveRewards /> : <DemoRewardsScreen />;
 }
