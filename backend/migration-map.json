@@ -30,6 +30,16 @@
       "source": "0005_resident_report_submission.sql",
       "target": "20261027115510_resident_report_submission.sql",
       "sha256": "e7b35a9b7cbc04bcb482ef937e2b94696ea891ca4d6c6f58f06df7623090a803"
+    },
+    {
+      "source": "0006_resident_media_tables.sql",
+      "target": "20261027143037_resident_media_tables.sql",
+      "sha256": "16799c73cb76f3f5c5b82016f2cb8568a06bb5ee6428463ea70738311cc5b14d"
+    },
+    {
+      "source": "0007_resident_media_security.sql",
+      "target": "20261027143038_resident_media_security.sql",
+      "sha256": "be7a627b39cd0d952f2b2f2171d0b008858c413462c41bf778f22acbb12f5f58"
     }
   ]
 }

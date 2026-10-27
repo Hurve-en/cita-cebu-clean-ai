@@ -188,3 +188,28 @@ export const reportSubmissionReceipts = pgTable('report_submission_receipts', {
 
 // Policies, grants, triggers and privileged functions are owned by the reviewed
 // custom security migration. Do not run schema push or introspection to replace it.
+
+// App-owned media metadata only. Supabase owns storage.objects/storage.buckets.
+export const residentMedia = pgTable('resident_media', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ownerId: uuid('owner_id').notNull().references(() => accountAccess.userId, { onDelete: 'restrict' }),
+  requestId: uuid('request_id').notNull(),
+  kind: text('kind').notNull(),
+  reportId: uuid('report_id').references(() => reports.id, { onDelete: 'restrict' }),
+  label: text('label'),
+  score: text('score'),
+  modelVersion: text('model_version'),
+  byteSize: integer('byte_size').notNull(),
+  state: text('state').notNull().default('uploading'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  readyAt: timestamp('ready_at', { withTimezone: true }),
+}, t => [
+  uniqueIndex('media_owner_request').on(t.ownerId, t.requestId),
+  uniqueIndex('media_one_report_photo').on(t.reportId).where(sql`${t.reportId} is not null and ${t.state} <> 'deleted'`),
+  index('media_owner_order').on(t.ownerId, t.createdAt, t.id),
+  check('media_size_valid', sql`${t.byteSize} between 1 and 2097152`),
+  check('media_request_valid', sql`${t.requestId} <> '00000000-0000-0000-0000-000000000000'::uuid`),
+  check('media_state_valid', sql`${t.state} in ('uploading','ready','delete_pending','deleted')`),
+  check('media_ready_valid', sql`${t.state} <> 'ready' or ${t.readyAt} is not null`),
+  check('media_shape_valid', sql`${t.state} = 'deleted' or (${t.kind} = 'report_photo' and ${t.reportId} is not null and ${t.label} is null and ${t.score} is null and ${t.modelVersion} is null) or (${t.kind} = 'scan' and ${t.reportId} is null and ${t.label} is not null and ${t.label} in ('glass','metal','non-recyclable','organic','paper','plastic') and ${t.score} is not null and ${t.score} ~ '^(0([.][0-9]{1,8})?|1([.]0{1,8})?)$' and ${t.modelVersion} is not null and ${t.modelVersion} = 'mobilenetv2-d0744dc70738-v1')`),
+]).enableRLS();

@@ -1,3 +1,6 @@
+import { uuid } from 'expo';
+import { mediaService } from '@/features/resident/media-client';
+import { MODEL_VERSION } from '@/features/resident/media-model';
 import { useAuth } from "@/features/auth/auth-state";
 import { useResident } from "@/features/resident/resident-state";
 import { newRecordId } from "@/features/resident/resident-model";
@@ -13,7 +16,7 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useIsFocused } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { useEffect, useRef, useState, type PropsWithChildren } from "react";
+import { useEffect, useMemo, useRef, useState, type PropsWithChildren } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -277,6 +280,8 @@ function CaptureCamera({
   );
 }
 function ScanExperience({ live }: { live: boolean }) {
+  const auth = useAuth();
+  const media = useMemo(() => auth.client ? mediaService(auth.client) : null, [auth.client]);
   const isFocused = useIsFocused();
   const { state, saveScan } = useResident();
   const scanId = useRef<string | null>(null);
@@ -312,7 +317,7 @@ function ScanExperience({ live }: { live: boolean }) {
   }, []);
 
   function acceptPhoto(selected: SelectedPhoto) {
-    scanId.current = newRecordId();
+    scanId.current = live ? uuid.v4() : newRecordId();
     setHistorySaved(false);
     setHistoryError("");
     requestId.current += 1;
@@ -368,15 +373,23 @@ function ScanExperience({ live }: { live: boolean }) {
   }
 
   async function persistPrediction(result: WastePrediction, operation: number) {
-    if (live || !photo || saveBusy.current) return;
-    const id = scanId.current ?? newRecordId();
+    if (!photo || saveBusy.current) return;
+    const id = scanId.current ?? (live ? uuid.v4() : newRecordId());
     scanId.current = id;
     saveBusy.current = true;
     setSavingHistory(true);
     setHistoryError("");
     setHistorySaved(false);
     try {
-      await saveScan({ id, label: result.label, photoUri: photo.uri });
+      if (live) {
+        if (!media || !auth.state.user) throw Error("Sign in again before saving this scan.");
+        await media.save(auth.state.user.id, id, {
+          kind: 'scan', reportId: null, label: result.label,
+          score: result.score.toFixed(8), modelVersion: MODEL_VERSION,
+        }, photo.uri);
+      } else {
+        await saveScan({ id, label: result.label, photoUri: photo.uri });
+      }
       if (operation === requestId.current) setHistorySaved(true);
     } catch (reason) {
       if (operation === requestId.current)
@@ -529,6 +542,9 @@ function ScanExperience({ live }: { live: boolean }) {
           </View>
         </View>
 
+        {live && !prediction && <Text style={s.privacy}>
+          Completed scans save a resized photo and sorting suggestion to your private account history.
+        </Text>}
         {picking ? (
           <Panel>
             <View style={s.empty}>
@@ -612,13 +628,11 @@ function ScanExperience({ live }: { live: boolean }) {
                 </Panel>
                 <View accessibilityLiveRegion="polite">
                   <Text style={s.copy}>
-                    {live
-                      ? "Result ready for this session. Account scan history is not connected; this photo and result have not been saved."
-                      : savingHistory
-                        ? "Saving photo and result on this device…"
-                        : historySaved
-                          ? "Saved to scan history on this device."
-                          : "Result ready. History has not been saved yet."}
+                    {savingHistory
+                      ? live ? "Saving your photo and result to your account…" : "Saving photo and result on this device…"
+                      : historySaved
+                        ? live ? "Photo and result saved to your account scan history." : "Saved to scan history on this device."
+                        : "Result ready. History saving has not been confirmed yet."}
                   </Text>
                 </View>
                 {!!historyError && (
@@ -631,7 +645,7 @@ function ScanExperience({ live }: { live: boolean }) {
                     {state.storageError}
                   </Text>
                 )}
-                {!live && !historySaved && !savingHistory && (
+                {!historySaved && !savingHistory && (
                   <Action
                     secondary
                     label="Retry saving scan"
@@ -642,14 +656,12 @@ function ScanExperience({ live }: { live: boolean }) {
                     }}
                   />
                 )}
-                {!live && (
-                  <Action
-                    secondary
-                    label="View scan history"
-                    disabled={blocked}
-                    onPress={() => openDetail("history")}
-                  />
-                )}
+                <Action
+                  secondary
+                  label="View scan history"
+                  disabled={blocked}
+                  onPress={() => openDetail("history")}
+                />
                 <Action
                   label="Scan another item"
                   onPress={useCamera}
@@ -819,8 +831,9 @@ function ScanExperience({ live }: { live: boolean }) {
             </View>
           )}
           <Text style={s.privacy}>
-            Saved scan photos stay on this device until you delete their
-            records. Other copies may remain in the app cache.
+            {live
+              ? "Analysis runs on this device. Completed scans upload a resized photo and result to your private account history. Pending saves keep a retry copy on this device; other temporary copies may remain in the app cache."
+              : "Saved scan photos stay on this device until you delete their records. Other copies may remain in the app cache."}
           </Text>
           <Text style={s.limit}>
             Hazardous waste is not supported. Scans do not verify disposal or
