@@ -44,3 +44,6 @@ example
 /android
 
 .expo/
+
+/supabase/.temp/
+/supabase/.branches/
