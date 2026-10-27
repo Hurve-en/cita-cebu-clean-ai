@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { authUsers } from 'drizzle-orm/supabase';
 import {
-  bigint, boolean, check, index, integer, pgEnum, pgTable,
+  bigint, boolean, check, index, integer, jsonb, primaryKey, pgEnum, pgTable,
   text, time, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -172,6 +172,19 @@ export const reportEvents = pgTable('report_events', {
 export type CollectionSchedule = typeof collectionSchedules.$inferSelect;
 export type Report = typeof reports.$inferSelect;
 export type ReportEvent = typeof reportEvents.$inferSelect;
+
+// Private-by-privilege idempotency receipts; clients have no table access.
+export const reportSubmissionReceipts = pgTable('report_submission_receipts', {
+  ownerId: uuid('owner_id').notNull().references(() => accountAccess.userId, { onDelete: 'restrict' }),
+  requestId: uuid('request_id').notNull(),
+  payload: jsonb('payload').notNull(),
+  reportId: uuid('report_id').notNull().unique('submission_report_unique').references(() => reports.id, { onDelete: 'restrict' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => [
+  primaryKey({ name: 'submission_owner_request_pk', columns: [t.ownerId, t.requestId] }),
+  check('submission_payload_object', sql`jsonb_typeof(${t.payload}) = 'object'`),
+  check('submission_request_not_nil', sql`${t.requestId} <> '00000000-0000-0000-0000-000000000000'::uuid`),
+]).enableRLS();
 
 // Policies, grants, triggers and privileged functions are owned by the reviewed
 // custom security migration. Do not run schema push or introspection to replace it.

@@ -18,7 +18,9 @@ assert.deepEqual(names, [
   '20261027061427_identity_security.sql',
   '20261027065955_community_tables.sql',
   '20261027070020_community_access.sql',
-], 'identity history stays fixed; two community migrations append');
+  '20261027115243_report_submission_receipts.sql',
+  '20261027115510_resident_report_submission.sql',
+], 'deployed history stays fixed; two submission migrations append');
 const before = fs.readFileSync(path.join(backend, 'migration-map.json'), 'utf8');
 stageMigrations(backend);
 assert.equal(fs.readFileSync(path.join(backend, 'migration-map.json'), 'utf8'), before);
