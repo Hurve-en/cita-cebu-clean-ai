@@ -211,5 +211,68 @@ export const residentMedia = pgTable('resident_media', {
   check('media_request_valid', sql`${t.requestId} <> '00000000-0000-0000-0000-000000000000'::uuid`),
   check('media_state_valid', sql`${t.state} in ('uploading','ready','delete_pending','deleted')`),
   check('media_ready_valid', sql`${t.state} <> 'ready' or ${t.readyAt} is not null`),
-  check('media_shape_valid', sql`${t.state} = 'deleted' or (${t.kind} = 'report_photo' and ${t.reportId} is not null and ${t.label} is null and ${t.score} is null and ${t.modelVersion} is null) or (${t.kind} = 'scan' and ${t.reportId} is null and ${t.label} is not null and ${t.label} in ('glass','metal','non-recyclable','organic','paper','plastic') and ${t.score} is not null and ${t.score} ~ '^(0([.][0-9]{1,8})?|1([.]0{1,8})?)$' and ${t.modelVersion} is not null and ${t.modelVersion} = 'mobilenetv2-d0744dc70738-v1')`),
+  check('media_shape_valid', sql`${t.state} = 'deleted' or (${t.kind} = 'disposal_photo' and ${t.reportId} is null and ${t.label} is null and ${t.score} is null and ${t.modelVersion} is null) or (${t.kind} = 'report_photo' and ${t.reportId} is not null and ${t.label} is null and ${t.score} is null and ${t.modelVersion} is null) or (${t.kind} = 'scan' and ${t.reportId} is null and ${t.label} is not null and ${t.label} in ('glass','metal','non-recyclable','organic','paper','plastic') and ${t.score} is not null and ${t.score} ~ '^(0([.][0-9]{1,8})?|1([.]0{1,8})?)$' and ${t.modelVersion} is not null and ${t.modelVersion} = 'mobilenetv2-d0744dc70738-v1')`),
 ]).enableRLS();
+
+// Rewards: immutable ledger; all writes use reviewed RPCs in custom SQL.
+export const rewardRules = pgTable('reward_rules', {
+  id: integer('id').primaryKey().default(1),
+  disposalPoints: integer('disposal_points').notNull().default(10),
+  cleanupPoints: integer('cleanup_points').notNull().default(50),
+  dailyClaimLimit: integer('daily_claim_limit').notNull().default(3),
+}, t=>[check('reward_rules_valid',sql`${t.id}=1 and ${t.disposalPoints} between 1 and 1000 and ${t.cleanupPoints} > ${t.disposalPoints} and ${t.cleanupPoints} <= 10000 and ${t.dailyClaimLimit} between 1 and 10`)]).enableRLS();
+export const rewardCatalog = pgTable('reward_catalog', {
+  id: uuid('id').primaryKey().defaultRandom(), name:text('name').notNull(), description:text('description').notNull(),
+  cost:integer('cost').notNull(),stock:integer('stock').notNull().default(0),enabled:boolean('enabled').notNull().default(false),
+  createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow(),
+},t=>[check('reward_catalog_valid',sql`char_length(${t.name}) between 3 and 100 and char_length(${t.description}) between 10 and 1000 and ${t.cost} between 1 and 1000000 and ${t.stock} >= 0`)]).enableRLS();
+export const cleanupEvents=pgTable('cleanup_events',{
+  id:uuid('id').primaryKey().defaultRandom(),barangayId:uuid('barangay_id').notNull().references(()=>barangays.id),
+  title:text('title').notNull(),location:text('location').notNull(),instructions:text('instructions').notNull(),
+  startsAt:timestamp('starts_at',{withTimezone:true}).notNull(),endsAt:timestamp('ends_at',{withTimezone:true}).notNull(),
+  points:integer('points').notNull(),capacity:integer('capacity').notNull(),status:text('status').notNull().default('published'),
+  createdBy:uuid('created_by').notNull().references(()=>accountAccess.userId),
+  createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow(),
+},t=>[check('cleanup_event_valid',sql`char_length(${t.title}) between 3 and 100 and char_length(${t.location}) between 3 and 200 and char_length(${t.instructions}) between 10 and 2000 and ${t.endsAt}>${t.startsAt} and ${t.points} between 2 and 10000 and ${t.capacity} between 1 and 10000 and ${t.status} in ('published','cancelled')`),index('cleanup_community_order').on(t.barangayId,t.startsAt,t.id)]).enableRLS();
+export const disposalClaims=pgTable('disposal_claims',{
+  id:uuid('id').primaryKey().defaultRandom(),ownerId:uuid('owner_id').notNull().references(()=>accountAccess.userId),requestId:uuid('request_id').notNull(),
+  barangayId:uuid('barangay_id').notNull().references(()=>barangays.id),beforeId:uuid('before_id').notNull().references(()=>residentMedia.id),afterId:uuid('after_id').references(()=>residentMedia.id),
+  location:text('location').notNull(),description:text('description').notNull(),points:integer('points').notNull(),status:text('status').notNull().default('pending'),
+  reviewNote:text('review_note').notNull().default(''),reviewedBy:uuid('reviewed_by').references(()=>accountAccess.userId),reviewedAt:timestamp('reviewed_at',{withTimezone:true}),
+  createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow(),
+},t=>[uniqueIndex('claim_owner_request').on(t.ownerId,t.requestId),index('claim_owner_order').on(t.ownerId,t.createdAt,t.id),index('claim_community_status').on(t.barangayId,t.status),check('claim_valid',sql`(${t.afterId} is null or ${t.beforeId}<>${t.afterId}) and ${t.requestId}<>'00000000-0000-0000-0000-000000000000'::uuid and char_length(${t.location}) between 3 and 200 and char_length(${t.description}) between 10 and 2000 and ${t.points} between 1 and 10000 and ${t.status} in ('pending','approved','rejected') and char_length(${t.reviewNote})<=1000 and ((${t.status}='pending' and ${t.reviewedBy} is null and ${t.reviewedAt} is null) or (${t.status}<>'pending' and ${t.reviewedAt} is not null and char_length(${t.reviewNote})>=8))`)]).enableRLS();
+export const cleanupParticipants=pgTable('cleanup_participants',{
+  id:uuid('id').primaryKey().defaultRandom(),ownerId:uuid('owner_id').notNull().references(()=>accountAccess.userId),eventId:uuid('event_id').notNull().references(()=>cleanupEvents.id),
+  status:text('status').notNull().default('joined'),reviewNote:text('review_note').notNull().default(''),reviewedBy:uuid('reviewed_by').references(()=>accountAccess.userId),reviewedAt:timestamp('reviewed_at',{withTimezone:true}),
+  createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow(),
+},t=>[uniqueIndex('cleanup_once_per_resident').on(t.ownerId,t.eventId),check('participant_valid',sql`${t.status} in ('joined','completed','rejected','cancelled') and char_length(${t.reviewNote})<=1000 and ((${t.status} in ('joined','cancelled') and ${t.reviewedBy} is null and ${t.reviewedAt} is null) or (${t.status} not in ('joined','cancelled') and ${t.reviewedBy} is not null and ${t.reviewedAt} is not null and char_length(${t.reviewNote})>=8))`)]).enableRLS();
+export const rewardRedemptions=pgTable('reward_redemptions',{
+  id:uuid('id').primaryKey().defaultRandom(),ownerId:uuid('owner_id').notNull().references(()=>accountAccess.userId),requestId:uuid('request_id').notNull(),rewardId:uuid('reward_id').notNull().references(()=>rewardCatalog.id),
+  barangayId:uuid('barangay_id').notNull().references(()=>barangays.id),rewardName:text('reward_name').notNull(),cost:integer('cost').notNull(),status:text('status').notNull().default('pending'),
+  reviewNote:text('review_note').notNull().default(''),fulfilledBy:uuid('fulfilled_by').references(()=>accountAccess.userId),
+  createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow(),
+},t=>[uniqueIndex('redemption_owner_request').on(t.ownerId,t.requestId),index('redemption_owner_order').on(t.ownerId,t.createdAt,t.id),check('redemption_valid',sql`${t.cost}>0 and ${t.requestId}<>'00000000-0000-0000-0000-000000000000'::uuid and ${t.status} in ('pending','fulfilled','cancelled') and char_length(${t.reviewNote})<=1000`)]).enableRLS();
+export const rewardLedger=pgTable('reward_ledger',{
+  id:uuid('id').primaryKey().defaultRandom(),ownerId:uuid('owner_id').notNull().references(()=>accountAccess.userId),amount:integer('amount').notNull(),
+  kind:text('kind').notNull(),sourceId:uuid('source_id').notNull(),actorId:uuid('actor_id').notNull().references(()=>accountAccess.userId),
+  createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow(),
+},t=>[uniqueIndex('ledger_source_once').on(t.kind,t.sourceId),index('ledger_owner_order').on(t.ownerId,t.createdAt,t.id),check('ledger_valid',sql`(${t.kind} in ('disposal','scan','cleanup','refund') and ${t.amount}>0) or (${t.kind}='redemption' and ${t.amount}<0)`)]).enableRLS();
+
+export const scanRewardConfig = pgTable('scan_reward_config', {
+ id:integer('id').primaryKey().default(1),autoAwardsEnabled:boolean('auto_awards_enabled').notNull().default(false),
+ dailyAwards:integer('daily_awards').notNull().default(3),dailyPoints:integer('daily_points').notNull().default(30),
+ hourlyStarts:integer('hourly_starts').notNull().default(5),dailyStarts:integer('daily_starts').notNull().default(10),
+},t=>[check('scan_config_valid',sql`${t.id}=1 and ${t.dailyAwards} between 1 and 10 and ${t.dailyPoints} between 1 and 1000 and ${t.hourlyStarts} between 1 and 20 and ${t.dailyStarts} between 1 and 50`)]).enableRLS();
+export const scanRewardSessions=pgTable('scan_reward_sessions',{
+ cleanupEventId:uuid('cleanup_event_id').references(()=>cleanupEvents.id),
+ id:uuid('id').primaryKey().defaultRandom(),ownerId:uuid('owner_id').notNull().references(()=>accountAccess.userId),requestId:uuid('request_id').notNull(),
+ barangayId:uuid('barangay_id').notNull().references(()=>barangays.id),beforeId:uuid('before_id').references(()=>residentMedia.id),afterId:uuid('after_id').references(()=>residentMedia.id),
+ fingers:integer('fingers').notNull(),points:integer('points').notNull(),status:text('status').notNull().default('capture'),reason:text('reason').notNull().default(''),
+ createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow(),expiresAt:timestamp('expires_at',{withTimezone:true}).notNull(),
+ submittedAt:timestamp('submitted_at',{withTimezone:true}),reviewedAt:timestamp('reviewed_at',{withTimezone:true}),
+ lease:uuid('lease'),leasedAt:timestamp('leased_at',{withTimezone:true}),attempts:integer('attempts').notNull().default(0),verifier:text('verifier'),reviewedBy:uuid('reviewed_by').references(()=>accountAccess.userId),
+},t=>[uniqueIndex('scan_reward_request').on(t.ownerId,t.requestId),uniqueIndex('scan_reward_before').on(t.beforeId),uniqueIndex('scan_reward_after').on(t.afterId),index('scan_reward_owner_order').on(t.ownerId,t.createdAt,t.id),
+ check('scan_reward_valid',sql`${t.requestId}<>'00000000-0000-0000-0000-000000000000'::uuid and ${t.fingers} between 1 and 3 and ${t.points} between 1 and 1000 and ${t.expiresAt}>${t.createdAt} and ${t.attempts} between 0 and 3 and ${t.status} in ('capture','pending','review','approved','rejected') and (${t.beforeId} is null or ${t.afterId} is null or ${t.beforeId}<>${t.afterId})`)]).enableRLS();
+export const rewardImageFingerprints=pgTable('reward_image_fingerprints',{
+ sha256:text('sha256').primaryKey(),sessionId:uuid('session_id').notNull().references(()=>scanRewardSessions.id),dhash:text('dhash').notNull(),
+},t=>[check('reward_fingerprint_valid',sql`${t.sha256} ~ '^[0-9a-f]{64}$' and ${t.dhash} ~ '^[0-9a-f]{16}$'`)]).enableRLS();

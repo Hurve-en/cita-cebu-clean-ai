@@ -102,7 +102,7 @@ export function ReportSubmission() {
           <Button disabled={state.phase === "sending" || state.phase === "blocked" || (!locked && !newReady)}
             label={state.phase === "sending" ? "Confirming submission…" : state.phase === "uncertain" ? "Retry / confirm saved submission" : "Submit report"}
             onPress={() => { void controller.submit(locked ? undefined : { barangay: barangay!, title, category, location, description }); }} />
-          <Button secondary disabled={state.phase === "sending"} label="My reports"
+          <Button secondary disabled={state.phase === "sending"} label="History Reports"
             onPress={() => router.push({ pathname: "/detail", params: { view: "reports" } })} />
           <Copy>After you submit, a retry copy of the report text stays on this device until you confirm success. An interrupted submission can be resumed from this form.</Copy>
         </>

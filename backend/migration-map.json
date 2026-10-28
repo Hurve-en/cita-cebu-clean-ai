@@ -40,6 +40,61 @@
       "source": "0007_resident_media_security.sql",
       "target": "20261027143038_resident_media_security.sql",
       "sha256": "be7a627b39cd0d952f2b2f2171d0b008858c413462c41bf778f22acbb12f5f58"
+    },
+    {
+      "source": "0008_rewards_tables.sql",
+      "target": "20261027225422_rewards_tables.sql",
+      "sha256": "443e6218b2a329b5c2b3130f0cf49050935298944dda278b2546411444abc10e"
+    },
+    {
+      "source": "0009_rewards_security.sql",
+      "target": "20261027225429_rewards_security.sql",
+      "sha256": "962af06708c1919dc9b44214a990d8443097d4c6fac8af23edf0f6099c08aa0b"
+    },
+    {
+      "source": "0010_scan_reward_tables.sql",
+      "target": "20261027235141_scan_reward_tables.sql",
+      "sha256": "50d3d47a99c79a5e4f66ea8122f03e4fe85e3a2da376e4062472684a8c3bc338"
+    },
+    {
+      "source": "0011_scan_reward_guardrails.sql",
+      "target": "20261027235143_scan_reward_guardrails.sql",
+      "sha256": "450a2bf74712e64375f926edca6af32fc8465d4261672098f37306f946541a13"
+    },
+    {
+      "source": "0012_unified_scan_event.sql",
+      "target": "20261028004041_unified_scan_event.sql",
+      "sha256": "549a7f8ed40e1bacee55b4182d21c018d93d38fe8e97b80df5e3677f5af4354e"
+    },
+    {
+      "source": "0013_unified_scan_access.sql",
+      "target": "20261028004105_unified_scan_access.sql",
+      "sha256": "ea1832ff9b4306a347f2b72d67eb4fea604531d6c317c31593497e9f097fc58e"
+    },
+    {
+      "source": "0014_single_photo_claim.sql",
+      "target": "20261028035601_single_photo_claim.sql",
+      "sha256": "8ae17b1c29b7737b606b501671586de9713ee5e588fdaed75ce1aa7f8cfb0971"
+    },
+    {
+      "source": "0015_manual_photo_submission.sql",
+      "target": "20261028035602_manual_photo_submission.sql",
+      "sha256": "8c721c9c09b2a6c478dc3a0e239124ee663140eb09425807526f3a11d9d3cb35"
+    },
+    {
+      "source": "0016_automated_claim_review.sql",
+      "target": "20261028050830_automated_claim_review.sql",
+      "sha256": "579ac74e318fcc78d883bdc42d1172504df2b3460dbea31a3cfc7adcaaddd9d5"
+    },
+    {
+      "source": "0017_resident_history_completion.sql",
+      "target": "20261028050831_resident_history_completion.sql",
+      "sha256": "06cea7568b10553cdc45e21edc5d3d8d646ccf7f3322ca068cd865719870337a"
+    },
+    {
+      "source": "0018_pending_scan_removal.sql",
+      "target": "20261028055350_pending_scan_removal.sql",
+      "sha256": "e9ca96e8156d8744e581d0c98e65fdd84e8b6a3b11f1e14e34fe31f3e4f54351"
     }
   ]
 }

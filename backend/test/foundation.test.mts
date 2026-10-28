@@ -23,7 +23,18 @@ assert.deepEqual(names, [
   '20261027115510_resident_report_submission.sql',
   '20261027143037_resident_media_tables.sql',
   '20261027143038_resident_media_security.sql',
-], 'deployed history stays fixed; two media migrations append');
+  '20261027225422_rewards_tables.sql',
+  '20261027225429_rewards_security.sql',
+  '20261027235141_scan_reward_tables.sql',
+  '20261027235143_scan_reward_guardrails.sql',
+  '20261028004041_unified_scan_event.sql',
+  '20261028004105_unified_scan_access.sql',
+  '20261028035601_single_photo_claim.sql',
+  '20261028035602_manual_photo_submission.sql',
+  '20261028050830_automated_claim_review.sql',
+  '20261028050831_resident_history_completion.sql',
+  '20261028055350_pending_scan_removal.sql',
+], 'deployed history stays fixed; history completion and pending-removal migrations append');
 const before = fs.readFileSync(path.join(backend, 'migration-map.json'), 'utf8');
 stageMigrations(backend);
 assert.equal(fs.readFileSync(path.join(backend, 'migration-map.json'), 'utf8'), before);

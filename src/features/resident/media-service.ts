@@ -63,14 +63,15 @@ export function createMediaService(source: SupabaseClient, scoped: (token:string
       if(!stored||JSON.stringify(stored)!==JSON.stringify(p)||(await spool.bytes(owner,requestId)).length!==bytes.length)throw Error('The retry photo could not be verified. No upload was started.');
       return resume(p);
     },
-    async list(owner:string,kind:'scan'|'report_photo',reportId?:string,cursor?:Cursor){
+    async list(owner:string,kind:'scan'|'report_photo'|'disposal_photo',reportId?:string,cursor?:Cursor){
       const c=await session(owner);
-      let query=c.from('resident_media').select('*').eq('owner_id',owner).eq('kind',kind).neq('state','deleted').order('created_at',{ascending:false}).order('id',{ascending:false}).limit(21);
+      let query=c.from(kind==='disposal_photo'?'unused_disposal_photos':'resident_media').select('*').eq('owner_id',owner).eq('kind',kind).neq('state','deleted').order('created_at',{ascending:false}).order('id',{ascending:false}).limit(21);
       if(kind==='report_photo')query=query.eq('report_id',uuid(reportId));
       if(cursor)query=query.or(cursorFilter(cursor,false));
       const r=await query;if(r.error)throw Error('Saved photos could not be loaded. Check your connection and retry.');
       return page(r.data,v=>{const row=mediaRow(v,owner);if(row.kind!==kind||(kind==='report_photo'&&row.report_id!==reportId)||row.state==='deleted')throw Error('Unexpected photo scope.');return row;});
     },
+    async findByRequest(owner:string,request:string){const c=await session(owner);const r=await c.from('resident_media').select('*').eq('owner_id',owner).eq('request_id',uuid(request)).neq('state','deleted').maybeSingle();if(r.error)throw Error('Saved capture could not be recovered.');if(!r.data)return null;const row=mediaRow(r.data,owner);if(row.request_id!==request)throw Error('Recovery key mismatch.');return row;},
     async item(owner:string,id:string){
       const c=await session(owner);const r=await c.from('resident_media').select('*').eq('owner_id',owner).eq('kind','scan').neq('state','deleted').eq('id',uuid(id)).maybeSingle();
       if(r.error)throw Error('This saved scan could not be loaded.');

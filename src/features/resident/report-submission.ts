@@ -133,7 +133,7 @@ export function createReportSubmission(options: {
           } else {
             publish({ phase: "uncertain", pending, result: null, error:
               e instanceof SubmissionError && e.code === "23505"
-                ? "This submission key has different saved details. Check My reports and contact support before trying again."
+                ? "This submission key has different saved details. Check History Reports and contact support before trying again."
                 : e instanceof SubmissionError && e.code === "42501"
                   ? "Your account could not submit. Check account access, then return to confirm this saved submission."
                   : "We could not confirm whether your report was saved. Retry these same details to check safely." });

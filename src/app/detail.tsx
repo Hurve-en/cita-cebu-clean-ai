@@ -1,6 +1,6 @@
 import { useAuth } from "@/features/auth/auth-state";
 import { LiveDetail } from "@/features/resident/live-ui";
-import { Redirect, useLocalSearchParams } from "expo-router";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
@@ -239,7 +239,7 @@ function DetailContent({ view, id }: { view: string; id: string }) {
             </Card>
 
             <Button
-              label="View my reports"
+              label="View History Reports"
               onPress={() => openDetail("reports")}
             />
           </>
@@ -334,38 +334,6 @@ function DetailContent({ view, id }: { view: string; id: string }) {
             />
           </>
         )}
-      </Page>
-    );
-  }
-
-  if (view === "reports") {
-    return (
-      <Page title="My reports" back>
-        <Copy>
-          Local records for {profile.email}. No reports have been sent to
-          barangay staff.
-        </Copy>
-        <Message error text={state.storageError} />
-        <Button label="New report" onPress={() => openDetail("new-report")} />
-
-        {!state.reports.length && (
-          <Card>
-            <Heading>No reports yet</Heading>
-            <Copy>Your demo reports will appear here.</Copy>
-          </Card>
-        )}
-
-        {state.reports.map((report) => (
-          <Card key={report.id} onPress={() => openDetail("report", report.id)}>
-            <Heading>{report.title}</Heading>
-            <Copy>{report.location}</Copy>
-            <Copy>{report.status} · Local only</Copy>
-            <Copy>{new Date(report.createdAt).toLocaleString()}</Copy>
-            {report.photoFile && (
-              <SavedPhoto fileName={report.photoFile} label="Report photo" />
-            )}
-          </Card>
-        ))}
       </Page>
     );
   }
@@ -548,42 +516,9 @@ function DetailContent({ view, id }: { view: string; id: string }) {
     );
   }
 
-  if (view === "history") {
-    return (
-      <Page title="Scan history" back>
-        <Copy>
-          {state.scans.length} saved scans · {profile.email}
-        </Copy>
-        <Copy>
-          Saved on this device. Sign in with this same demo email after
-          restarting to restore them.
-        </Copy>
-        <Message error text={state.storageError} />
-        {!state.scans.length && (
-          <Card>
-            <Heading>No saved scans yet</Heading>
-            <Copy>
-              Analyze a photo in the Scan tab. A completed result will be saved
-              here automatically.
-            </Copy>
-          </Card>
-        )}
-        {state.scans.map((scan) => (
-          <Card
-            key={scan.id}
-            onPress={() => openDetail("scan-record", scan.id)}
-          >
-            <SavedPhoto
-              fileName={scan.photoFile}
-              label={`Saved ${MATERIAL_NAMES[scan.label] ?? scan.label} photo`}
-            />
-            <Heading>{MATERIAL_NAMES[scan.label] ?? scan.label}</Heading>
-            <Copy>{new Date(scan.createdAt).toLocaleString()}</Copy>
-            <Copy>Model suggestion · View details</Copy>
-          </Card>
-        ))}
-      </Page>
-    );
+  if (view === "history" || view === "reports") {
+    const entries = [...state.scans.map(scan => ({id:scan.id,createdAt:scan.createdAt,title:MATERIAL_NAMES[scan.label] ?? scan.label,status:"Saved draft · 0 points",view:"scan-record"})), ...state.reports.map(report => ({id:report.id,createdAt:report.createdAt,title:report.title,status:`${report.status} · Local only · 0 points`,view:"report"}))].sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+    return <Page title="History Reports"><Copy>Saved on this device for {profile.email}. Demo records do not award real points or reach barangay staff.</Copy><Message error text={state.storageError}/>{!entries.length&&<Copy>No saved demo records yet.</Copy>}{entries.map(item=><Card key={`${item.view}:${item.id}`} onPress={()=>openDetail(item.view,item.id)}><Heading>{item.title}</Heading><Copy>{item.status}</Copy><Copy>{new Date(item.createdAt).toLocaleString()}</Copy><Copy>Open details and photo</Copy></Card>)}<Button label="Report a waste concern" onPress={()=>openDetail("new-report")}/><Button secondary label="Back" onPress={()=>router.canGoBack()?router.back():router.replace("/(tabs)/profile")}/></Page>;
   }
 
   if (view === "scan-record") {
