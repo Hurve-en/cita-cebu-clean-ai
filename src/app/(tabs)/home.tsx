@@ -104,8 +104,8 @@ function DemoHomeScreen() {
       />
       <MenuItem
         icon="history"
-        title="My reports"
-        detail={`${state.reports.length} demo reports in this session`}
+        title="History Reports"
+        detail={`${state.reports.length + state.scans.length} saved demo records`}
         onPress={() => openDetail("reports")}
       />
       <MenuItem

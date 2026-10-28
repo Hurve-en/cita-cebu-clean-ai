@@ -1,0 +1,2 @@
+ALTER TABLE "scan_reward_sessions" ADD COLUMN "cleanup_event_id" uuid;--> statement-breakpoint
+ALTER TABLE "scan_reward_sessions" ADD CONSTRAINT "scan_reward_sessions_cleanup_event_id_cleanup_events_id_fk" FOREIGN KEY ("cleanup_event_id") REFERENCES "public"."cleanup_events"("id") ON DELETE no action ON UPDATE no action;

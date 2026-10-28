@@ -1,4 +1,5 @@
-import { ReportPhotoPanel, ScanHistory, SavedScan } from './media-ui';
+import { HistoryReports } from './history-ui';
+import { ReportPhotoPanel, SavedScan } from './media-ui';
 import { BarangayPicker } from "./barangay-picker";
 import { ReportSubmission } from "./report-submission-ui";
 import { SortingGuide } from "./sorting-guide";
@@ -256,17 +257,8 @@ export function LiveSchedules() {
     </Page>
   );
 }
-export function LiveRewards() {
-  return (
-    <Page title="Rewards" subtitle="A little extra motivation." badge={BADGE}>
-      <EmptyState
-        icon="gift"
-        title="Rewards are not available yet"
-        description="Points, earning rules and redemption services are still being connected. No balance or rewards are assigned to your account yet."
-      />
-    </Page>
-  );
-}
+export { ResidentRewards as LiveRewards } from '../rewards/rewards-ui';
+
 export function LiveProfile() {
   const auth = useAuth();
   const { state, actions } = useLiveResident();
@@ -297,18 +289,7 @@ export function LiveProfile() {
         detail="Name and barangay"
         onPress={() => openDetail("edit-profile")}
       />
-      <MenuItem
-        icon="report"
-        title="My reports"
-        detail="Your submitted reports and public activity"
-        onPress={() => openDetail("reports")}
-      />
-      <MenuItem
-        icon="history"
-        title="Scan history"
-        detail="Your saved photos and sorting suggestions"
-        onPress={() => openDetail("history")}
-      />
+      <MenuItem icon="history" title="History Reports" detail="Saved photos, submissions and points earned" onPress={() => openDetail("history")} />
       <MenuItem
         icon="help"
         title="Help and privacy"
@@ -338,44 +319,6 @@ export function LiveProfile() {
             });
         }}
       />
-    </Page>
-  );
-}
-function Reports() {
-  const { state, actions } = useLiveResident();
-  return (
-    <Page
-      title="My reports"
-      subtitle="Only reports owned by your account."
-      badge={BADGE}
-      back
-    >
-      <Feedback
-        data={state.reports}
-        retry={() => void actions.loadReports()}
-        empty={
-          state.reports.loaded && !state.reports.value.length
-            ? "No reports yet"
-            : undefined
-        }
-      />
-      {state.reports.value.map((row) => (
-        <Card key={row.id} onPress={() => openDetail("report", row.id)}>
-          <Text style={ui.badge}>{statusLabel(row.status)}</Text>
-          <Heading>{row.title}</Heading>
-          <Copy>{row.location_text}</Copy>
-          <Copy>{dateLabel(row.created_at)}</Copy>
-        </Card>
-      ))}
-      <More data={state.reports} load={() => void actions.loadReports(true)} />
-      <Button
-        secondary
-        disabled={state.reports.loading}
-        label="Refresh reports"
-        onPress={() => void actions.loadReports()}
-      />
-      <Button label="Report a waste concern" onPress={() => openDetail("new-report")} />
-      <Copy>You can add an optional photo from your saved report details.</Copy>
     </Page>
   );
 }
@@ -608,10 +551,10 @@ function LiveDetailContent({ view, id }: { view: string; id: string }) {
   const { state: auth } = useAuth();
   const { state } = useLiveResident();
 
-  if (view === "history") return <ScanHistory />;
+  if (view === "history" || view === "reports") return <HistoryReports />;
   if (view === "scan-record") return <SavedScan key={id} id={id} />;
   if (view === "new-report") return <ReportSubmission key={auth.user!.id} />;
-  if (view === "reports") return <Reports />;
+
   if (view === "report")
     return <ReportDetail key={`${auth.user?.id}:${id}`} id={id} />;
   if (view === "schedule")
@@ -664,7 +607,7 @@ function LiveDetailContent({ view, id }: { view: string; id: string }) {
         view === "new-report"
           ? "Report a waste concern"
           : view === "history"
-            ? "Scan history"
+            ? "History Reports"
             : "Feature unavailable"
       }
       badge={BADGE}

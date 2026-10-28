@@ -3,7 +3,7 @@ export const MEDIA_BUCKET = 'resident-media';
 export const MEDIA_LIMIT = 2 * 1024 * 1024;
 export const MODEL_VERSION = 'mobilenetv2-d0744dc70738-v1';
 export const MATERIALS = ['glass','metal','non-recyclable','organic','paper','plastic'] as const;
-export type MediaKind = 'scan' | 'report_photo';
+export type MediaKind = 'scan' | 'report_photo' | 'disposal_photo';
 export type MediaDraft = { kind: MediaKind; reportId: string | null; label: string | null; score: string | null; modelVersion: string | null };
 export type PendingMedia = MediaDraft & { version: 1; owner: string; requestId: string; byteSize: number; createdAt: string };
 export type MediaRow = { id: string; owner_id: string; request_id: string; kind: MediaKind; report_id: string | null; label: string | null; score: string | null; model_version: string | null; byte_size: number; state: 'uploading'|'ready'|'delete_pending'|'deleted'; created_at: string; ready_at: string | null };
@@ -14,9 +14,11 @@ export type MediaSpool = {
   drop(owner: string, request: string): Promise<void>;
 };
 export function validateDraft(d: MediaDraft) {
-  if (!d || !['scan','report_photo'].includes(d.kind)) throw Error('Invalid media type.');
+  if (!d || !['scan','report_photo','disposal_photo'].includes(d.kind)) throw Error('Invalid media type.');
   if (d.kind === 'scan') {
     if (d.reportId !== null || !MATERIALS.includes(d.label as typeof MATERIALS[number]) || typeof d.score !== 'string' || !/^(0([.][0-9]{1,8})?|1([.]0{1,8})?)$/.test(d.score) || d.modelVersion !== MODEL_VERSION) throw Error('Invalid scan result.');
+  } else if(d.kind==='disposal_photo') {
+    if(d.reportId!==null||d.label!==null||d.score!==null||d.modelVersion!==null)throw Error('Invalid disposal photo.');
   } else if (!d.reportId || !uuid(d.reportId) || d.label !== null || d.score !== null || d.modelVersion !== null) throw Error('Invalid report attachment.');
   return d;
 }
@@ -27,7 +29,7 @@ export function pendingMedia(value: unknown, owner: string): PendingMedia {
 }
 export function mediaRow(value: unknown, owner: string): MediaRow {
   const r = value as MediaRow;
-  if (!r || uuid(r.owner_id) !== owner || !uuid(r.id) || !uuid(r.request_id) || !['scan','report_photo'].includes(r.kind) || !['uploading','ready','delete_pending','deleted'].includes(r.state) || !Number.isInteger(r.byte_size) || r.byte_size < 1 || r.byte_size > MEDIA_LIMIT || !Number.isFinite(Date.parse(r.created_at))) throw Error('Photo record could not be verified.');
+  if (!r || uuid(r.owner_id) !== owner || !uuid(r.id) || !uuid(r.request_id) || !['scan','report_photo','disposal_photo'].includes(r.kind) || !['uploading','ready','delete_pending','deleted'].includes(r.state) || !Number.isInteger(r.byte_size) || r.byte_size < 1 || r.byte_size > MEDIA_LIMIT || !Number.isFinite(Date.parse(r.created_at))) throw Error('Photo record could not be verified.');
   if (r.state !== 'deleted') validateDraft({ kind:r.kind, reportId:r.report_id, label:r.label, score:r.score, modelVersion:r.model_version });
   if (r.state === 'ready' && (!r.ready_at || !Number.isFinite(Date.parse(r.ready_at)))) throw Error('Photo is not confirmed saved.');
   return r;

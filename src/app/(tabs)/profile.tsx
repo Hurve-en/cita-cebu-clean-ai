@@ -102,19 +102,7 @@ function DemoProfileScreen() {
 
       <Section title="Your activity" />
 
-      <MenuItem
-        icon="report"
-        title="My reports"
-        detail={`${state.reports.length} reports this session`}
-        onPress={() => openDetail("reports")}
-      />
-
-      <MenuItem
-        icon="history"
-        title="Scan history"
-        detail="Saved scanning activity"
-        onPress={() => openDetail("history")}
-      />
+      <MenuItem icon="history" title="History Reports" detail="Your saved scans and local reports" onPress={() => openDetail("history")} />
 
       <MenuItem
         icon="gift"

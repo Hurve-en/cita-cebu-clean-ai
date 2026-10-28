@@ -14,7 +14,7 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { useIsFocused } from "expo-router";
+import { router, useIsFocused } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useEffect, useMemo, useRef, useState, type PropsWithChildren } from "react";
 import {
@@ -286,6 +286,7 @@ function ScanExperience({ live }: { live: boolean }) {
   const { state, saveScan } = useResident();
   const scanId = useRef<string | null>(null);
   const saveBusy = useRef(false);
+  const [savedId,setSavedId]=useState<string|null>(null);
   const [historySaved, setHistorySaved] = useState(false);
   const [savingHistory, setSavingHistory] = useState(false);
   const [historyError, setHistoryError] = useState("");
@@ -319,6 +320,7 @@ function ScanExperience({ live }: { live: boolean }) {
   function acceptPhoto(selected: SelectedPhoto) {
     scanId.current = live ? uuid.v4() : newRecordId();
     setHistorySaved(false);
+    setSavedId(null);
     setHistoryError("");
     requestId.current += 1;
     setError(null);
@@ -383,10 +385,11 @@ function ScanExperience({ live }: { live: boolean }) {
     try {
       if (live) {
         if (!media || !auth.state.user) throw Error("Sign in again before saving this scan.");
-        await media.save(auth.state.user.id, id, {
+        const saved=await media.save(auth.state.user.id, id, {
           kind: 'scan', reportId: null, label: result.label,
           score: result.score.toFixed(8), modelVersion: MODEL_VERSION,
         }, photo.uri);
+        if(operation===requestId.current)setSavedId(saved.id);
       } else {
         await saveScan({ id, label: result.label, photoUri: photo.uri });
       }
@@ -658,10 +661,11 @@ function ScanExperience({ live }: { live: boolean }) {
                 )}
                 <Action
                   secondary
-                  label="View scan history"
+                  label="View History Reports"
                   disabled={blocked}
                   onPress={() => openDetail("history")}
                 />
+                {live&&historySaved&&savedId&&<Action secondary label="Submit this photo" disabled={blocked} onPress={()=>router.push({pathname:'/reward-scan',params:{photo:savedId}})}/>}
                 <Action
                   label="Scan another item"
                   onPress={useCamera}

@@ -5,7 +5,7 @@ const output=fs.mkdtempSync(path.join(os.tmpdir(),'cebu-media-'));
 for(const name of ['live-model','media-model','media-service','media-store'])fs.writeFileSync(path.join(output,name+'.js'),ts.transpileModule(fs.readFileSync(path.join(__dirname,'../src/features/resident',name+'.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText);
 after(()=>fs.rmSync(output,{recursive:true,force:true}));
 const {pendingMedia,mediaRow,mediaPath,MODEL_VERSION}=require(path.join(output,'media-model.js'));
-const {createMediaService,MediaError}=require(path.join(output,'media-service.js'));
+const {createMediaService}=require(path.join(output,'media-service.js'));
 const {createMediaCollection}=require(path.join(output,'media-store.js'));
 const A='cf100000-0000-4000-8000-000000000001',B='cf100000-0000-4000-8000-000000000002',K='cf500000-0000-4000-8000-000000000001',R='cf300000-0000-4000-8000-000000000001';
 const bytes=Uint8Array.from([255,216,255,1,2]);

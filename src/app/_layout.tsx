@@ -36,6 +36,7 @@ function Routes() {
         >
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="detail" />
+          <Stack.Screen name="reward-scan" />
         </Stack.Protected>
         <Stack.Protected
           guard={preview && demo.role === "officer" && Boolean(officer.session)}
